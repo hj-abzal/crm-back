@@ -2,10 +2,11 @@ import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UsersModule } from './modules/users/users.module';
 import { SequelizeModule } from '@nestjs/sequelize';
-import { MailsModule } from './modules/mails/mails.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { Users } from './modules/users/users.model';
 import { LoggingMiddleware } from './middlewares/logging.middleware';
+import { ContactsModule } from './modules/contacts/contacts.module';
+import { Contacts } from './modules/contacts/contacts.model';
 
 @Module({
   imports: [
@@ -26,12 +27,12 @@ import { LoggingMiddleware } from './middlewares/logging.middleware';
         ssl: false, // DEV only
         autoLoadModels: true, // DEV only
         synchronize: true,
-        models: [Users],
+        models: [Users, Contacts],
       }),
     }),
     UsersModule,
     AuthModule,
-    MailsModule,
+    ContactsModule,
   ],
 })
 export class AppModule implements NestModule {

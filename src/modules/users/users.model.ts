@@ -1,5 +1,6 @@
-import { Column, DataType, Table, Model } from 'sequelize-typescript';
-import { USER_STATUS } from './user-status.enums';
+import { Column, DataType, Table, Model, HasMany } from 'sequelize-typescript';
+import { USER_ROLE } from './user-role.enums';
+import { Contacts } from '../contacts/contacts.model';
 
 @Table({ tableName: 'users' })
 export class Users extends Model<Users> {
@@ -8,31 +9,45 @@ export class Users extends Model<Users> {
     unique: true,
     autoIncrement: true,
     primaryKey: true,
+    field: 'user_id',
   })
-  id: number;
+  userId: number;
 
-  @Column({ type: DataType.STRING })
+  @Column({ type: DataType.STRING, unique: true, allowNull: false })
+  username: string;
+
+  @Column({ type: DataType.STRING, field: 'first_name', allowNull: false })
   firstName: string;
 
-  @Column({ type: DataType.STRING })
+  @Column({ type: DataType.STRING, field: 'last_name', allowNull: false })
   lastName: string;
 
-  @Column({ type: DataType.STRING, unique: true })
-  email: string;
-
-  @Column({ type: DataType.STRING })
+  @Column({ type: DataType.STRING, allowNull: false })
   password: string;
 
   @Column({
     type: DataType.ENUM({
-      values: [USER_STATUS.CREATED, USER_STATUS.VERIFIED],
+      values: [USER_ROLE.ADMIN, USER_ROLE.MANAGER],
     }),
+    allowNull: false,
   })
-  status: USER_STATUS;
+  role: USER_ROLE;
 
-  @Column({ type: DataType.STRING(1024), unique: true, field: 'access_token' })
+  @Column({
+    type: DataType.STRING(1024),
+    unique: true,
+    field: 'access_token',
+    allowNull: true,
+  })
   accessToken: string;
 
-  @Column({ type: DataType.STRING, allowNull: true })
-  code: string;
+  @HasMany(() => Contacts, { foreignKey: 'managerId' })
+  contacts: Contacts[];
+
+  toJSON() {
+    const attributes = { ...this.get() };
+    delete attributes.password;
+    delete attributes.accessToken;
+    return attributes;
+  }
 }
