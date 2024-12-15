@@ -32,10 +32,16 @@ export class UserController {
   }
 
   @Post('')
-  // @UseGuards(AuthGuard)
-  // @Role(USER_ROLE.ADMIN)
+  @UseGuards(AuthGuard)
+  @Role(USER_ROLE.ADMIN)
   async register(@Body() dto: CreateUserDto) {
     return this.usersService.create(dto);
+  }
+
+  //TODO: dev only
+  @Post('admin')
+  async registerAdmin(@Body() dto: CreateUserDto) {
+    return this.usersService.createAdmin(dto);
   }
 
   @Put(':userId')

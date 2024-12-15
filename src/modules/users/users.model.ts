@@ -1,6 +1,6 @@
 import { Column, DataType, Table, Model, HasMany } from 'sequelize-typescript';
 import { USER_ROLE } from './user-role.enums';
-import { Contacts } from '../contacts/contacts.model';
+import { Contacts } from '../contacts/models/contacts.model';
 
 @Table({ tableName: 'users' })
 export class Users extends Model<Users> {

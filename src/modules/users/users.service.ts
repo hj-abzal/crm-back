@@ -4,7 +4,7 @@ import { Users } from './users.model';
 import { USER_ROLE } from './user-role.enums';
 import { CreateUserDto, UpdateUserDto } from './create-user.dto';
 import { CodeUtil } from '../../utils/code.util';
-import { Contacts } from '../contacts/contacts.model';
+import { Contacts } from '../contacts/models/contacts.model';
 
 @Injectable()
 export class UsersService {
@@ -72,6 +72,41 @@ export class UsersService {
         lastName: userDto.lastName,
         password: await CodeUtil.encryptPassword(userDto.password),
         role: USER_ROLE.MANAGER,
+      };
+
+      const createdUser = await this.usersRepository.create(user);
+      this.logger.log(`Successfully created user with ID: ${createdUser.id}`);
+      return createdUser;
+    } catch (error) {
+      this.logger.error(
+        `Error creating user with username: ${userDto.username}`,
+        error,
+      );
+      throw new Error('Failed to create user');
+    }
+  }
+
+  //TODO: dev only
+  async createAdmin(userDto: CreateUserDto): Promise<Users> {
+    this.logger.log(`Creating user with username: ${userDto.username}`);
+    const existingUser = await this.findByUsername(userDto.username);
+
+    if (existingUser) {
+      this.logger.warn(
+        `Registration failed: User with username ${userDto.username} already exists`,
+      );
+      throw new HttpException(
+        `A user with the email ${userDto.username} already exists.`,
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    try {
+      const user = {
+        username: userDto.username,
+        firstName: userDto.firstName,
+        lastName: userDto.lastName,
+        password: await CodeUtil.encryptPassword(userDto.password),
+        role: USER_ROLE.ADMIN,
       };
 
       const createdUser = await this.usersRepository.create(user);
