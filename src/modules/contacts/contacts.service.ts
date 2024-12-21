@@ -9,6 +9,9 @@ import { UpdateContactDto } from './dto/update-contact.dto';
 import { UpdatePhoneDto } from './dto/update-phone.dto';
 import { Cities } from '../cities/cities.model';
 import { ContactSources } from '../contact-source/contact-source.model';
+import { Events } from '../events/events.model';
+import { Comments } from '../comments/comments.model';
+import { Tasks } from '../tasks/tasks.model';
 
 @Injectable()
 export class ContactsService {
@@ -43,6 +46,9 @@ export class ContactsService {
         { model: Tags, through: { attributes: [] } }, // { attributes: [] } is to not nest some ref values !Note: many to many
         { model: Cities },
         { model: ContactSources },
+        { model: Events },
+        { model: Comments },
+        { model: Tasks },
       ],
     });
 

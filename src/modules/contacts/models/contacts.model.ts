@@ -14,6 +14,9 @@ import { ContactTag } from '../../tags/contact-tag.model';
 import { Tags } from '../../tags/tags.model';
 import { Cities } from '../../cities/cities.model';
 import { ContactSources } from '../../contact-source/contact-source.model';
+import { Comments } from '../../comments/comments.model';
+import { Events } from '../../events/events.model';
+import { Tasks } from '../../tasks/tasks.model';
 
 @Table({ tableName: 'contacts' })
 export class Contacts extends Model<Contacts> {
@@ -82,4 +85,17 @@ export class Contacts extends Model<Contacts> {
 
   @BelongsToMany(() => Tags, () => ContactTag)
   tags: Tags[];
+
+  @HasMany(() => Comments, {
+    onDelete: 'CASCADE',
+  })
+  comments: Comments[];
+
+  @HasMany(() => Events, {
+    onDelete: 'CASCADE',
+  })
+  events: Events[];
+
+  @HasMany(() => Tasks)
+  tasks: Tasks[];
 }

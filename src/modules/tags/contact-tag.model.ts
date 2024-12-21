@@ -8,7 +8,7 @@ import {
 import { Contacts } from '../contacts/models/contacts.model';
 import { Tags } from './tags.model';
 
-@Table({ tableName: 'contact_tags' })
+@Table({ tableName: 'contact_tag' })
 export class ContactTag extends Model<ContactTag> {
   @ForeignKey(() => Contacts)
   @Column({ type: DataType.INTEGER, allowNull: false, field: 'contact_id' })

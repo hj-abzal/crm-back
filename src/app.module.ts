@@ -14,6 +14,13 @@ import { Cities } from './modules/cities/cities.model';
 import { TagsModule } from './modules/tags/tags.module';
 import { CitiesModule } from './modules/cities/cities.module';
 import { ContactSources } from './modules/contact-source/contact-source.model';
+import { Comments } from './modules/comments/comments.model';
+import { Tasks } from './modules/tasks/tasks.model';
+import { Events } from './modules/events/events.model';
+import { CommentsModule } from './modules/comments/comments.module';
+import { ContactSourceModule } from './modules/contact-source/contact-source.module';
+import { EventsModule } from './modules/events/events.module';
+import { TasksModule } from './modules/tasks/tasks.module';
 
 @Module({
   imports: [
@@ -33,7 +40,7 @@ import { ContactSources } from './modules/contact-source/contact-source.model';
         database: configService.get<string>('PGDATABASE'),
         ssl: false, // DEV only
         autoLoadModels: true, // DEV only
-        synchronize: true,
+        synchronize: true, // DEV only
         models: [
           Users,
           Contacts,
@@ -42,6 +49,9 @@ import { ContactSources } from './modules/contact-source/contact-source.model';
           ContactTag,
           Cities,
           ContactSources,
+          Events,
+          Comments,
+          Tasks,
         ],
       }),
     }),
@@ -50,6 +60,11 @@ import { ContactSources } from './modules/contact-source/contact-source.model';
     ContactsModule,
     TagsModule,
     CitiesModule,
+    CommentsModule,
+    ContactSourceModule,
+    EventsModule,
+    TagsModule,
+    TasksModule,
   ],
 })
 export class AppModule implements NestModule {

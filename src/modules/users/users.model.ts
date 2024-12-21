@@ -1,8 +1,12 @@
 import { Column, DataType, Table, Model, HasMany } from 'sequelize-typescript';
 import { USER_ROLE } from './user-role.enums';
 import { Contacts } from '../contacts/models/contacts.model';
+import { Tasks } from '../tasks/tasks.model';
+import { Comments } from '../comments/comments.model';
 
-@Table({ tableName: 'users' })
+@Table({
+  tableName: 'users',
+})
 export class Users extends Model<Users> {
   @Column({
     type: DataType.INTEGER,
@@ -43,6 +47,12 @@ export class Users extends Model<Users> {
 
   @HasMany(() => Contacts, { foreignKey: 'managerId' })
   contacts: Contacts[];
+
+  @HasMany(() => Comments, { foreignKey: 'managerId' })
+  comments: Comments[];
+
+  @HasMany(() => Tasks, { foreignKey: 'managerId' })
+  tasks: Tasks[];
 
   toJSON() {
     const attributes = { ...this.get() };
