@@ -41,7 +41,7 @@ export class ContactsService {
         {
           model: Users,
           as: 'manager',
-          attributes: { exclude: ['password', 'accessToken'] },
+          attributes: { exclude: ['password'] },
         },
         { model: Tags, through: { attributes: [] } }, // { attributes: [] } is to not nest some ref values !Note: many to many
         { model: Cities },

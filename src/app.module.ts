@@ -6,21 +6,13 @@ import { AuthModule } from './modules/auth/auth.module';
 import { Users } from './modules/users/users.model';
 import { LoggingMiddleware } from './middlewares/logging.middleware';
 import { ContactsModule } from './modules/contacts/contacts.module';
-import { Contacts } from './modules/contacts/models/contacts.model';
-import { ContactPhones } from './modules/contacts/models/contact-phones.model';
-import { Tags } from './modules/tags/tags.model';
-import { ContactTag } from './modules/tags/contact-tag.model';
-import { Cities } from './modules/cities/cities.model';
 import { TagsModule } from './modules/tags/tags.module';
 import { CitiesModule } from './modules/cities/cities.module';
-import { ContactSources } from './modules/contact-source/contact-source.model';
-import { Comments } from './modules/comments/comments.model';
-import { Tasks } from './modules/tasks/tasks.model';
-import { Events } from './modules/events/events.model';
 import { CommentsModule } from './modules/comments/comments.module';
 import { ContactSourceModule } from './modules/contact-source/contact-source.module';
 import { EventsModule } from './modules/events/events.module';
 import { TasksModule } from './modules/tasks/tasks.module';
+import { GatewaysModule } from './gateway/gateways.module';
 
 @Module({
   imports: [
@@ -43,15 +35,15 @@ import { TasksModule } from './modules/tasks/tasks.module';
         synchronize: true, // DEV only
         models: [
           Users,
-          Contacts,
-          ContactPhones,
-          Tags,
-          ContactTag,
-          Cities,
-          ContactSources,
-          Events,
-          Comments,
-          Tasks,
+          // Contacts,
+          // ContactPhones,
+          // Tags,
+          // ContactTag,
+          // Cities,
+          // ContactSources,
+          // Events,
+          // Comments,
+          // Tasks,
         ],
       }),
     }),
@@ -65,6 +57,7 @@ import { TasksModule } from './modules/tasks/tasks.module';
     EventsModule,
     TagsModule,
     TasksModule,
+    GatewaysModule,
   ],
 })
 export class AppModule implements NestModule {

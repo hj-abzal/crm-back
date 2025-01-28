@@ -5,6 +5,7 @@ import { UsersService } from './users.service';
 import { AuthModule } from '../auth/auth.module';
 import { UserController } from './user.controller';
 import { ContactsModule } from '../contacts/contacts.module';
+import { GatewaysModule } from '../../gateway/gateways.module';
 
 @Module({
   controllers: [UserController],
@@ -13,6 +14,7 @@ import { ContactsModule } from '../contacts/contacts.module';
     forwardRef(() => AuthModule),
     SequelizeModule.forFeature([Users]),
     forwardRef(() => ContactsModule),
+    GatewaysModule,
   ],
   exports: [UsersService, SequelizeModule],
 })

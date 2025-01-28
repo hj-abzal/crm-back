@@ -17,7 +17,7 @@ import { SetMetadata } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 
-export const Role = (role: USER_ROLE.ADMIN) => SetMetadata('role', role);
+export const Roles = (...roles: USER_ROLE[]) => SetMetadata('roles', roles);
 
 export type ExpressGuarded = ExpressRequest & {
   user?: Partial<Users>;
@@ -35,22 +35,19 @@ export class AuthGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<ExpressGuarded>();
-    const requiredRole = this.reflector.get<USER_ROLE.ADMIN>(
-      'role',
+    const requiredRoles = this.reflector.get<USER_ROLE[]>(
+      'roles',
       context.getHandler(),
     );
+
     const token = this.extractToken(request);
 
     const decodedToken = this.verifyToken(token);
     const user = await this.validateUser(decodedToken);
 
-    if (token !== user.accessToken) {
-      throw new ForbiddenException();
-    }
-
-    if (requiredRole && user.role !== requiredRole) {
+    if (requiredRoles && !requiredRoles.includes(user.role)) {
       throw new ForbiddenException(
-        `Access denied: ${requiredRole} role required`,
+        `Access denied: required roles: ${requiredRoles.join(', ')}`,
       );
     }
 

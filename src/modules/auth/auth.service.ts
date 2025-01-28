@@ -4,6 +4,7 @@ import { Users } from '../users/users.model';
 import { CodeUtil } from '../../utils/code.util';
 import { JwtService } from '@nestjs/jwt';
 import { LoginDto } from './login.dto';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
@@ -12,6 +13,7 @@ export class AuthService {
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
   ) {}
 
   async validateUser(dto: LoginDto): Promise<Users> {
@@ -49,21 +51,17 @@ export class AuthService {
     const user = await this.validateUser(dto);
     if (user) {
       const { userId, firstName, lastName, username } = user;
-      const accessToken = this.jwtService.sign({
-        userId,
-        firstName,
-        lastName,
-        username,
-      });
-
-      const isUpdated = await this.usersService.updateTokenByUserId(
-        userId,
-        accessToken,
+      const accessToken = this.jwtService.sign(
+        {
+          userId,
+          firstName,
+          lastName,
+          username,
+        },
+        {
+          expiresIn: this.configService.get('EXPIRES_IN') || '3d',
+        },
       );
-      if (!isUpdated) {
-        this.logger.warn(`Failed to update access token for userId: ${userId}`);
-        throw new Error(`Failed to update access token for userId: ${userId}`);
-      }
 
       this.logger.log(`User logged in successfully: ${username}`);
       return { accessToken };

@@ -1,11 +1,10 @@
-import { Column, DataType, Table, Model, HasMany } from 'sequelize-typescript';
+import { Column, DataType, Table, Model } from 'sequelize-typescript';
 import { USER_ROLE } from './user-role.enums';
-import { Contacts } from '../contacts/models/contacts.model';
-import { Tasks } from '../tasks/tasks.model';
-import { Comments } from '../comments/comments.model';
 
 @Table({
   tableName: 'users',
+  paranoid: true,
+  timestamps: true,
 })
 export class Users extends Model<Users> {
   @Column({
@@ -37,27 +36,18 @@ export class Users extends Model<Users> {
   })
   role: USER_ROLE;
 
-  @Column({
-    type: DataType.STRING(1024),
-    unique: true,
-    field: 'access_token',
-    allowNull: true,
-  })
-  accessToken: string;
-
-  @HasMany(() => Contacts, { foreignKey: 'managerId' })
-  contacts: Contacts[];
-
-  @HasMany(() => Comments, { foreignKey: 'managerId' })
-  comments: Comments[];
-
-  @HasMany(() => Tasks, { foreignKey: 'managerId' })
-  tasks: Tasks[];
+  // @HasMany(() => Contacts, { foreignKey: 'managerId' })
+  // contacts: Contacts[];
+  //
+  // @HasMany(() => Comments, { foreignKey: 'managerId' })
+  // comments: Comments[];
+  //
+  // @HasMany(() => Tasks, { foreignKey: 'managerId' })
+  // tasks: Tasks[];
 
   toJSON() {
     const attributes = { ...this.get() };
     delete attributes.password;
-    delete attributes.accessToken;
     return attributes;
   }
 }

@@ -2,6 +2,8 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
+import { AuthenticatedSocketIoAdapter } from './gateway/authenticated-socket-io.adapter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -20,6 +22,12 @@ async function bootstrap() {
 
   const configService: ConfigService = app.get<ConfigService>(ConfigService);
   const PORT = configService.get('PORT');
+
+  const jwtService = app.get(JwtService);
+
+  app.useWebSocketAdapter(
+    new AuthenticatedSocketIoAdapter(app, jwtService, configService),
+  );
 
   await app.listen(PORT, () => console.log('PORT:', PORT));
 }
