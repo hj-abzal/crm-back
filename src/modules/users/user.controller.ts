@@ -38,7 +38,7 @@ export class UserController {
       const users = await this.usersService.getAll(lastUpdated);
       return {
         lastUpdatedAt: dayjs().toISOString(),
-        sourceUserId: request.user.userId,
+        sourceDeviceId: request.deviceId,
         payload: users,
       };
     } catch (e) {
@@ -60,12 +60,20 @@ export class UserController {
       const user = await this.usersService.getOne(userId);
       return {
         lastUpdatedAt: dayjs().toISOString(),
-        sourceUserId: request.user.userId,
+        sourceDeviceId: request.deviceId,
         payload: user,
       };
-    } catch (e) {
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      this.logger.error(
+        'Unexpected error while getting a user',
+        error.stack || error.message,
+      );
+
       throw new HttpException(
-        'Error while fetching the user',
+        'Error while getting a user. Please try again later.',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
@@ -79,23 +87,22 @@ export class UserController {
     @Req() request: ExpressGuarded,
   ): Promise<EventPayload<Users>> {
     try {
-      const sourceUserId = request.user.userId;
-      const newUser = await this.usersService.create(dto, sourceUserId);
+      const sourceDeviceId = request.deviceId;
+      const newUser = await this.usersService.create(dto, sourceDeviceId);
       return {
         lastUpdatedAt: dayjs().toISOString(),
-        sourceUserId,
+        sourceDeviceId,
         payload: newUser,
       };
     } catch (error) {
       if (error instanceof HttpException) {
-        throw error; // Rethrow already structured HttpException
+        throw error;
       }
       this.logger.error(
         'Unexpected error while registering a user',
         error.stack || error.message,
       );
 
-      // Throw a generic error message for unexpected errors
       throw new HttpException(
         'Error while creating a user. Please try again later.',
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -118,20 +125,28 @@ export class UserController {
     @Req() request: ExpressGuarded,
   ): Promise<EventPayload<Users>> {
     try {
-      const sourceUserId = request.user.userId;
+      const sourceDeviceId = request.deviceId;
       const updatedUser = await this.usersService.updateOne(
         userId,
         userDto,
-        sourceUserId,
+        sourceDeviceId,
       );
       return {
         lastUpdatedAt: dayjs().toISOString(),
         payload: updatedUser,
-        sourceUserId,
+        sourceDeviceId,
       };
-    } catch (e) {
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      this.logger.error(
+        'Unexpected error while updateOne user',
+        error.stack || error.message,
+      );
+
       throw new HttpException(
-        'Error while updating the user',
+        'Error while creating updating a user. Please try again later.',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
@@ -145,16 +160,24 @@ export class UserController {
     @Req() request: ExpressGuarded,
   ): Promise<EventPayload<null>> {
     try {
-      const sourceUserId = request.user.userId;
-      await this.usersService.deleteOne(userId, sourceUserId);
+      const sourceDeviceId = request.deviceId;
+      await this.usersService.deleteOne(userId, sourceDeviceId);
       return {
         lastUpdatedAt: dayjs().toISOString(),
-        sourceUserId,
+        sourceDeviceId,
         payload: null,
       };
-    } catch (e) {
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      this.logger.error(
+        'Unexpected error while deleting user',
+        error.stack || error.message,
+      );
+
       throw new HttpException(
-        'Error while deleting the user',
+        'Error while creating deleting a user. Please try again later.',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }

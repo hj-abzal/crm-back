@@ -21,6 +21,7 @@ export const Roles = (...roles: USER_ROLE[]) => SetMetadata('roles', roles);
 
 export type ExpressGuarded = ExpressRequest & {
   user?: Partial<Users>;
+  deviceId: string;
 };
 
 @Injectable()

@@ -31,19 +31,22 @@ export class UsersService {
     }
   }
 
-  async create(userDto: CreateUserDto, sourceUserId: number): Promise<Users> {
-    this.logger.log(`Creating user with username: ${userDto.username}`);
-    const existingUser = await this.findByUsername(userDto.username);
+  async create(userDto: CreateUserDto, sourceDeviceId: string): Promise<Users> {
+    this.logger.log(
+      `Creating user with username: ${userDto.username}, deviceId: ${sourceDeviceId}`,
+    );
 
+    const existingUser = await this.findByUsername(userDto.username);
     if (existingUser) {
       this.logger.warn(
-        `Registration failed: User with username ${userDto.username} already exists`,
+        `Registration failed: User with username ${userDto.username} already exists, deviceId: ${sourceDeviceId}`,
       );
       throw new HttpException(
         `A user with the email ${userDto.username} already exists.`,
         HttpStatus.BAD_REQUEST,
       );
     }
+
     try {
       const user = {
         username: userDto.username,
@@ -54,67 +57,78 @@ export class UsersService {
       };
 
       const createdUser = await this.usersRepository.create(user);
-      this.logger.log(`Successfully created user with ID: ${createdUser.id}`);
+      this.logger.log(
+        `Successfully created user with ID: ${createdUser.id}, deviceId: ${sourceDeviceId}`,
+      );
 
       // Emit user_created event
       this.appGateway.server.emit('user_created', {
         payload: createdUser,
-        sourceUserId,
+        sourceDeviceId,
         lastUpdatedAt: dayjs().toISOString(),
       });
 
       return createdUser;
     } catch (error) {
       this.logger.error(
-        `Error creating user with username: ${userDto.username}`,
+        `Error creating user with username: ${userDto.username}, deviceId: ${sourceDeviceId}`,
         error,
       );
       throw new Error('Failed to create user');
     }
   }
 
-  async getAll(lastUpdated: string): Promise<Users[]> {
+  async getAll(lastUpdated: string, sourceDeviceId: string): Promise<Users[]> {
     try {
-      this.logger.log(`Requesting to get all users`);
+      this.logger.log(
+        `Requesting to get all users, lastUpdated: ${
+          lastUpdated || 'not provided'
+        }, deviceId: ${sourceDeviceId}`,
+      );
+
       if (lastUpdated) {
-        return this.usersRepository.findAll({
-          where: {
-            [Op.or]: [
-              {
-                updatedAt: {
-                  [Op.gte]: new Date(lastUpdated), // Include updated or soft-deleted records
-                },
-              },
-              {
-                deletedAt: {
-                  [Op.gte]: new Date(lastUpdated), // Include soft-deleted records explicitly
-                },
-              },
-            ],
-          },
+        const whereClause = lastUpdated
+          ? {
+              [Op.or]: [
+                { updatedAt: { [Op.gte]: new Date(lastUpdated) } },
+                { deletedAt: { [Op.gte]: new Date(lastUpdated) } },
+              ],
+            }
+          : {};
+
+        return await this.usersRepository.findAll({
+          where: whereClause,
           paranoid: false,
         });
       }
+
       return await this.usersRepository.findAll();
     } catch (error) {
-      this.logger.error(`Error getting all users`, error);
+      this.logger.error(
+        `Error getting all users, deviceId: ${sourceDeviceId}`,
+        error,
+      );
       throw new Error('Failed to get users');
     }
   }
 
-  async getOne(userId: string): Promise<Users | undefined> {
+  async getOne(
+    userId: string,
+    sourceDeviceId: string,
+  ): Promise<Users | undefined> {
     try {
-      this.logger.log(`Fetching user with userId: ${userId}`);
+      this.logger.log(
+        `Fetching user with userId: ${userId}, deviceId: ${sourceDeviceId}`,
+      );
       return this.usersRepository.findOne({
         where: { userId },
-        include: [
-          {
-            model: Contacts,
-          },
-        ],
+        include: [{ model: Contacts }],
       });
     } catch (error) {
-      this.logger.error(`Error fetching user by userId: ${userId}`, error);
+      this.logger.error(
+        `Error fetching user by userId: ${userId}, deviceId: ${sourceDeviceId}`,
+        error,
+      );
       throw new Error('Failed to get user');
     }
   }
@@ -122,9 +136,13 @@ export class UsersService {
   async updateOne(
     userId: string,
     userDto: UpdateUserDto,
-    sourceUserId: number,
+    sourceDeviceId: string,
   ): Promise<Users> {
     try {
+      this.logger.log(
+        `Updating user with userId: ${userId}, deviceId: ${sourceDeviceId}`,
+      );
+
       const user: UpdateUserDto = {
         username: userDto.username,
         firstName: userDto.firstName,
@@ -137,82 +155,70 @@ export class UsersService {
 
       const [affectedCount] = await this.usersRepository.update(
         { ...user },
-        {
-          where: { userId },
-        },
+        { where: { userId } },
       );
 
       if (affectedCount !== 1) {
-        this.logger.warn(`No user found to update for userId: ${userId}`);
+        this.logger.warn(
+          `No user found to update for userId: ${userId}, deviceId: ${sourceDeviceId}`,
+        );
         throw new HttpException('User not found', HttpStatus.NOT_FOUND);
       }
 
       const updatedUser = await this.usersRepository.findByPk(userId);
-      this.logger.log(`Successfully updated user with userId: ${userId}`);
+      this.logger.log(
+        `Successfully updated user with userId: ${userId}, deviceId: ${sourceDeviceId}`,
+      );
 
       // Emit user_updated event
       this.appGateway.server.emit('user_updated', {
         payload: updatedUser,
-        sourceUserId,
+        sourceDeviceId,
         lastUpdatedAt: dayjs().toISOString(),
       });
 
       return updatedUser;
     } catch (error) {
-      this.logger.error(`Error updating userId: ${userId}`, error);
+      this.logger.error(
+        `Error updating userId: ${userId}, deviceId: ${sourceDeviceId}`,
+        error,
+      );
       throw new Error('Failed to update user');
     }
   }
 
-  async deleteOne(userId: string, sourceUserId: number): Promise<void> {
+  async deleteOne(userId: string, sourceDeviceId: string): Promise<void> {
     try {
-      this.logger.log(`Attempting to delete user with userId: ${userId}`);
+      this.logger.log(
+        `Attempting to delete user with userId: ${userId}, deviceId: ${sourceDeviceId}`,
+      );
+
       const deletedCount = await this.usersRepository.destroy({
         where: { userId },
       });
-
       if (deletedCount === 0) {
-        this.logger.warn(`No user found to delete with userId: ${userId}`);
+        this.logger.warn(
+          `No user found to delete with userId: ${userId}, deviceId: ${sourceDeviceId}`,
+        );
         throw new HttpException('User not found', HttpStatus.NOT_FOUND);
       }
 
-      this.logger.log(`Successfully deleted user with userId: ${userId}`);
+      this.logger.log(
+        `Successfully deleted user with userId: ${userId}, deviceId: ${sourceDeviceId}`,
+      );
 
       // Emit user_deleted event
       this.appGateway.server.emit('user_deleted', {
         payload: { userId: +userId },
-        sourceUserId,
+        sourceDeviceId,
         lastUpdatedAt: dayjs().toISOString(),
       });
     } catch (error) {
-      this.logger.error(`Error deleting userId: ${userId}`, error);
-      throw new Error('Failed to delete user');
-    }
-  }
-
-  //DEV ONLY
-  async createAdmin(userDto: CreateUserDto): Promise<Users> {
-    const existingUser = await this.findByUsername(userDto.username);
-
-    if (existingUser) {
-      throw new HttpException(
-        'A user with the email ${userDto.username} already exists.',
-        HttpStatus.BAD_REQUEST,
+      this.logger.error(
+        `Error deleting userId: ${userId}, deviceId: ${sourceDeviceId}`,
+        error,
       );
-    }
-    try {
-      const user = {
-        username: userDto.username,
-        firstName: userDto.firstName,
-        lastName: userDto.lastName,
-        password: await CodeUtil.encryptPassword(userDto.password),
-        role: USER_ROLE.ADMIN,
-      };
-
-      const createdUser = await this.usersRepository.create(user);
-      return createdUser;
-    } catch (error) {
-      throw new Error('Failed to create user');
+      throw new Error('Failed to delete user');
     }
   }
 }

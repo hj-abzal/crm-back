@@ -1,5 +1,5 @@
 export interface EventPayload<T> {
-  sourceUserId: number;
+  sourceDeviceId: string;
   lastUpdatedAt: string;
   payload: T;
 }

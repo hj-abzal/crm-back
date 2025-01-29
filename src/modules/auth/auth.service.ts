@@ -47,7 +47,9 @@ export class AuthService {
   }
 
   async login(dto: LoginDto): Promise<{ accessToken: string }> {
-    this.logger.log(`Logging in user: ${dto.username}`);
+    this.logger.log(
+      `Logging in user: ${dto.username} with deviceId: ${dto.deviceId}`,
+    );
     const user = await this.validateUser(dto);
     if (user) {
       const { userId, firstName, lastName, username } = user;
@@ -57,6 +59,7 @@ export class AuthService {
           firstName,
           lastName,
           username,
+          deviceId: dto.deviceId,
         },
         {
           expiresIn: this.configService.get('EXPIRES_IN') || '3d',
