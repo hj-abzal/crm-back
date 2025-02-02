@@ -31,14 +31,12 @@ export class UserController {
   @UseGuards(AuthGuard)
   @Roles(USER_ROLE.ADMIN)
   async getAll(
-    @Req() request: ExpressGuarded,
     @Query('lastUpdatedAt') lastUpdated?: string,
   ): Promise<EventPayload<Users[]>> {
     try {
       const users = await this.usersService.getAll(lastUpdated);
       return {
         lastUpdatedAt: dayjs().toISOString(),
-        sourceDeviceId: request.deviceId,
         payload: users,
       };
     } catch (e) {
@@ -52,15 +50,11 @@ export class UserController {
   @Get(':userId')
   @UseGuards(AuthGuard)
   @Roles(USER_ROLE.ADMIN)
-  async getOne(
-    @Param('userId') userId: string,
-    @Req() request: ExpressGuarded,
-  ): Promise<EventPayload<Users>> {
+  async getOne(@Param('userId') userId: string): Promise<EventPayload<Users>> {
     try {
       const user = await this.usersService.getOne(userId);
       return {
         lastUpdatedAt: dayjs().toISOString(),
-        sourceDeviceId: request.deviceId,
         payload: user,
       };
     } catch (error) {
@@ -82,16 +76,11 @@ export class UserController {
   @Post('')
   @UseGuards(AuthGuard)
   @Roles(USER_ROLE.ADMIN)
-  async register(
-    @Body() dto: CreateUserDto,
-    @Req() request: ExpressGuarded,
-  ): Promise<EventPayload<Users>> {
+  async register(@Body() dto: CreateUserDto): Promise<EventPayload<Users>> {
     try {
-      const sourceDeviceId = request.deviceId;
-      const newUser = await this.usersService.create(dto, sourceDeviceId);
+      const newUser = await this.usersService.create(dto);
       return {
         lastUpdatedAt: dayjs().toISOString(),
-        sourceDeviceId,
         payload: newUser,
       };
     } catch (error) {
@@ -118,23 +107,29 @@ export class UserController {
 
   @Put(':userId')
   @UseGuards(AuthGuard)
-  @Roles(USER_ROLE.ADMIN)
+  @Roles(USER_ROLE.ADMIN, USER_ROLE.MANAGER)
   async updateOne(
     @Param('userId') userId: string,
     @Body() userDto: UpdateUserDto,
     @Req() request: ExpressGuarded,
   ): Promise<EventPayload<Users>> {
-    try {
-      const sourceDeviceId = request.deviceId;
-      const updatedUser = await this.usersService.updateOne(
-        userId,
-        userDto,
-        sourceDeviceId,
+    const authenticatedUserId = request.user.userId;
+    const authenticatedUserRole = request.user.role;
+    if (
+      authenticatedUserRole === USER_ROLE.MANAGER &&
+      authenticatedUserId !== +userId
+    ) {
+      throw new HttpException(
+        'You are not authorized to update this user',
+        HttpStatus.FORBIDDEN,
       );
+    }
+
+    try {
+      const updatedUser = await this.usersService.updateOne(userId, userDto);
       return {
         lastUpdatedAt: dayjs().toISOString(),
         payload: updatedUser,
-        sourceDeviceId,
       };
     } catch (error) {
       if (error instanceof HttpException) {
@@ -157,14 +152,11 @@ export class UserController {
   @Roles(USER_ROLE.ADMIN)
   async deleteOne(
     @Param('userId') userId: string,
-    @Req() request: ExpressGuarded,
   ): Promise<EventPayload<null>> {
     try {
-      const sourceDeviceId = request.deviceId;
-      await this.usersService.deleteOne(userId, sourceDeviceId);
+      await this.usersService.deleteOne(userId);
       return {
         lastUpdatedAt: dayjs().toISOString(),
-        sourceDeviceId,
         payload: null,
       };
     } catch (error) {

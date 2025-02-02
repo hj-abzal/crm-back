@@ -1,4 +1,4 @@
-import { IsString, Length, MaxLength, MinLength } from 'class-validator';
+import { IsString, MaxLength, MinLength } from 'class-validator';
 
 export class LoginDto {
   @IsString()
@@ -10,8 +10,4 @@ export class LoginDto {
   @MinLength(6, { message: 'Password must be at least 6 characters long' })
   @MaxLength(50, { message: 'Password must not exceed 50 characters' })
   readonly password: string;
-
-  @IsString()
-  @Length(30)
-  readonly deviceId: string;
 }

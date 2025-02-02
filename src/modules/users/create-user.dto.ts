@@ -1,4 +1,5 @@
 import { IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import { USER_ROLE } from './user-role.enums';
 
 export class CreateUserDto {
   @IsString()
@@ -15,6 +16,9 @@ export class CreateUserDto {
   @MinLength(2, { message: 'Last name must be at least 2 characters long' })
   @MaxLength(30, { message: 'Last name must not exceed 30 characters' })
   readonly lastName: string;
+
+  @IsString()
+  readonly role: USER_ROLE;
 
   @IsString()
   @MinLength(6, { message: 'Password must be at least 6 characters long' })
@@ -37,6 +41,9 @@ export class UpdateUserDto {
   @MinLength(2, { message: 'Last name must be at least 2 characters long' })
   @MaxLength(30, { message: 'Last name must not exceed 30 characters' })
   readonly lastName: string;
+
+  @IsString()
+  readonly role: USER_ROLE;
 
   @IsOptional()
   @IsString()
