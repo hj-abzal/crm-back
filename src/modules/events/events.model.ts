@@ -8,7 +8,7 @@ import {
 } from 'sequelize-typescript';
 import { Contacts } from '../contacts/models/contacts.model';
 
-@Table({ tableName: 'events' })
+@Table({ tableName: 'events', timestamps: true, paranoid: true })
 export class Events extends Model<Events> {
   @Column({
     type: DataType.INTEGER,

@@ -9,7 +9,7 @@ import {
 import { Contacts } from '../contacts/models/contacts.model';
 import { Users } from '../users/users.model';
 
-@Table({ tableName: 'comments' })
+@Table({ tableName: 'comments', timestamps: true, paranoid: true })
 export class Comments extends Model<Comments> {
   @Column({
     type: DataType.INTEGER,

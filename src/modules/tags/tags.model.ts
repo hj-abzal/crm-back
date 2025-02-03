@@ -8,7 +8,7 @@ import {
 import { Contacts } from '../contacts/models/contacts.model';
 import { ContactTag } from './contact-tag.model';
 
-@Table({ tableName: 'tags' })
+@Table({ tableName: 'tags', timestamps: true, paranoid: true })
 export class Tags extends Model<Tags> {
   @Column({
     type: DataType.INTEGER,

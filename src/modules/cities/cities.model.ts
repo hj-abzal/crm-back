@@ -1,7 +1,7 @@
 import { Table, Column, Model, DataType, HasMany } from 'sequelize-typescript';
 import { Contacts } from '../contacts/models/contacts.model';
 
-@Table({ tableName: 'cities' })
+@Table({ tableName: 'cities', timestamps: true, paranoid: true })
 export class Cities extends Model<Cities> {
   @Column({
     type: DataType.INTEGER,

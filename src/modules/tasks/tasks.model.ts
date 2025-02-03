@@ -10,7 +10,7 @@ import { Contacts } from '../contacts/models/contacts.model';
 import { TASK_STATUS } from './task-status.enum';
 import { Users } from '../users/users.model';
 
-@Table({ tableName: 'tasks' })
+@Table({ tableName: 'tasks', timestamps: true, paranoid: true })
 export class Tasks extends Model<Tasks> {
   @Column({
     type: DataType.INTEGER,
