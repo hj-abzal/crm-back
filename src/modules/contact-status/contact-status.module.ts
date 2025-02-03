@@ -6,6 +6,7 @@ import { UsersModule } from '../users/users.module';
 import { ContactStatusService } from './contact-status.service';
 import { ContactStatusController } from './contact-status.controller';
 import { ContactStatuses } from './contact-status.model';
+import { GatewaysModule } from 'src/gateway/gateways.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { ContactStatuses } from './contact-status.model';
     forwardRef(() => UsersModule),
     forwardRef(() => ContactsModule),
     AuthModule,
+    GatewaysModule
   ],
   controllers: [ContactStatusController],
   providers: [ContactStatusService],

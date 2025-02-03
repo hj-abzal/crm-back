@@ -9,7 +9,7 @@ export class ContactStatuses extends Model<ContactStatuses> {
     autoIncrement: true,
     field: 'status_id',
   })
-  sourceId: number;
+  statusId: number;
 
   @Column({
     type: DataType.STRING,
