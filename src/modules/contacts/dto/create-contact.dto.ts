@@ -36,6 +36,10 @@ export class CreateContactDto {
   readonly sourceId?: number;
 
   @IsOptional()
+  @IsNumber()
+  readonly statusId?: number;
+
+  @IsOptional()
   @IsInt()
   @Min(1)
   managerId: number;
@@ -44,4 +48,9 @@ export class CreateContactDto {
   @IsDate()
   @Type(() => Date)
   birthDate?: Date;
+
+  @IsOptional()
+  @IsArray()
+  @IsInt({ each: true })
+  tagIds?: number[];
 }

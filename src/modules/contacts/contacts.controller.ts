@@ -3,11 +3,16 @@ import {
   Controller,
   Delete,
   Get,
+  HttpException,
+  HttpStatus,
+  Logger,
   Param,
   ParseIntPipe,
   Patch,
   Post,
   Put,
+  Query,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import { CreateContactDto } from './dto/create-contact.dto';
@@ -17,11 +22,53 @@ import { UpdateContactDto } from './dto/update-contact.dto';
 import { UpdatePhoneDto } from './dto/update-phone.dto';
 import { ContactPhones } from './models/contact-phones.model';
 import { DeletePhoneDto } from './dto/delete-phone.dto';
-import { AuthGuard } from '../auth/guards/auth.guard';
+import { AuthGuard, ExpressGuarded } from '../auth/guards/auth.guard';
+import dayjs from 'dayjs';
+import { USER_ROLE } from '../users/user-role.enums';
+import { Op } from 'sequelize';
 
 @Controller('contacts')
 export class ContactsController {
+  private readonly logger = new Logger(ContactsController.name);
+
   constructor(private readonly contactsService: ContactsService) {}
+
+  @Get()
+  @UseGuards(AuthGuard)
+  async getAllContacts(
+    @Query('page') page: number,
+    @Query('limit') limit: number,
+    @Query('lastUpdatedAt') lastUpdatedAt: Date,
+    @Query('managerId') managerId: number,
+    @Req() req: ExpressGuarded,
+  ) {
+    try {
+      const contacts = await this.contactsService.getAll(
+        page || 1,
+        limit || 300,
+        lastUpdatedAt,
+        req.user.role === USER_ROLE.ADMIN ? managerId : req.user.userId,
+      );
+
+      return {
+        lastUpdatedAt: dayjs().toISOString(),
+        payload: contacts,
+      };
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      this.logger.error(
+        'Unexpected error while fetching contacts',
+        error.stack || error.message,
+      );
+
+      throw new HttpException(
+        'Error while fetching all contacts. Please try again later.',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 
   @Post()
   @UseGuards(AuthGuard)

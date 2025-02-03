@@ -12,6 +12,8 @@ import { ContactSources } from '../contact-source/contact-source.model';
 import { Events } from '../events/events.model';
 import { Comments } from '../comments/comments.model';
 import { Tasks } from '../tasks/tasks.model';
+import { ContactStatuses } from '../contact-status/contact-status.model';
+import { Op } from 'sequelize';
 
 @Injectable()
 export class ContactsService {
@@ -27,10 +29,41 @@ export class ContactsService {
     private readonly citiesRepository: typeof Cities,
     @InjectModel(ContactSources)
     private readonly sourcesRepository: typeof ContactSources,
+    @InjectModel(ContactStatuses)
+    private readonly statusesRepository: typeof ContactStatuses,
   ) {}
 
-  async getAll(): Promise<Contacts[]> {
-    return this.contactsRepository.findAll();
+  async getAll(
+    page: number,
+    limit: number,
+    lastUpdatedAt: Date,
+    managerId: number,
+  ): Promise<{ contacts: Contacts[]; totalCount: number }> {
+    const offset = (page - 1) * limit;
+    const whereClause: any = {};
+    if (lastUpdatedAt) {
+      whereClause.updatedAt = {
+        [Op.or]: [
+          { updatedAt: { [Op.gte]: new Date(lastUpdatedAt) } },
+          { deletedAt: { [Op.gte]: new Date(lastUpdatedAt) } },
+        ],
+      }
+    }
+
+    if (managerId) {
+      whereClause.managerId = managerId;
+    }
+
+    const totalCount = await this.contactsRepository.count({
+      where: whereClause,
+    });
+    const contacts = await this.contactsRepository.findAll({
+      where: whereClause,
+      offset,
+      limit,
+      paranoid: lastUpdatedAt ? false : true,
+    });
+    return { contacts, totalCount };
   }
 
   async getOne(contactId: number): Promise<Contacts> {
@@ -60,8 +93,16 @@ export class ContactsService {
   }
 
   async createContact(createContactDto: CreateContactDto): Promise<Contacts> {
-    const { fullName, contactPhones, managerId, cityId, sourceId, birthDate } =
-      createContactDto;
+    const {
+      fullName,
+      contactPhones,
+      managerId,
+      cityId,
+      sourceId,
+      statusId,
+      birthDate,
+      tagIds,
+    } = createContactDto;
 
     const manager = await this.usersRepository.findOne({
       where: { userId: managerId },
@@ -88,11 +129,19 @@ export class ContactsService {
       }
     }
 
+    if (statusId) {
+      const status = await this.statusesRepository.findByPk(statusId);
+      if (!status) {
+        throw new NotFoundException(`Status with ID ${statusId} does not exist`);
+      }
+    }
+
     const contact = await this.contactsRepository.create({
       fullName,
       managerId,
       cityId,
       sourceId,
+      statusId,
       birthDate,
     });
 
@@ -104,6 +153,18 @@ export class ContactsService {
     );
 
     await Promise.all(phoneRecords);
+
+    if (tagIds?.length) {
+      const tags = await this.tagsRepository.findAll({
+        where: { tagId: tagIds },
+      });
+
+      if (!tags.length) {
+        throw new NotFoundException(`Tags not found`);
+      }
+
+      await contact.$set('tags', tags);
+    }
 
     return this.getOne(contact.contactId);
   }

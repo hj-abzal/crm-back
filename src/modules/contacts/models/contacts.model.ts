@@ -17,8 +17,9 @@ import { ContactSources } from '../../contact-source/contact-source.model';
 import { Comments } from '../../comments/comments.model';
 import { Events } from '../../events/events.model';
 import { Tasks } from '../../tasks/tasks.model';
+import { ContactStatuses } from '../../contact-status/contact-status.model';
 
-@Table({ tableName: 'contacts' })
+@Table({ tableName: 'contacts', timestamps: true, paranoid: true })
 export class Contacts extends Model<Contacts> {
   @Column({
     type: DataType.INTEGER,
@@ -76,6 +77,18 @@ export class Contacts extends Model<Contacts> {
 
   @BelongsTo(() => ContactSources)
   source: ContactSources;
+
+  @ForeignKey(() => ContactStatuses)
+  @Column({
+    type: DataType.INTEGER,
+    field: 'status_id',
+    onDelete: 'SET NULL',
+    allowNull: true,
+  })
+  statusId: number;
+
+  @BelongsTo(() => ContactStatuses)
+  status: ContactStatuses;
 
   @HasMany(() => ContactPhones, {
     foreignKey: 'contactId',

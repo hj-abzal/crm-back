@@ -1,5 +1,8 @@
-import { Column, DataType, Table, Model } from 'sequelize-typescript';
+import { Column, DataType, Table, Model, HasMany } from 'sequelize-typescript';
 import { USER_ROLE } from './user-role.enums';
+import { Contacts } from '../contacts/models/contacts.model';
+import { Comments } from '../comments/comments.model';
+import { Tasks } from '../tasks/tasks.model';
 
 @Table({
   tableName: 'users',
@@ -36,14 +39,14 @@ export class Users extends Model<Users> {
   })
   role: USER_ROLE;
 
-  // @HasMany(() => Contacts, { foreignKey: 'managerId' })
-  // contacts: Contacts[];
-  //
-  // @HasMany(() => Comments, { foreignKey: 'managerId' })
-  // comments: Comments[];
-  //
-  // @HasMany(() => Tasks, { foreignKey: 'managerId' })
-  // tasks: Tasks[];
+  @HasMany(() => Contacts, { foreignKey: 'managerId' })
+  contacts: Contacts[];
+
+  @HasMany(() => Comments, { foreignKey: 'managerId' })
+  comments: Comments[];
+
+  @HasMany(() => Tasks, { foreignKey: 'managerId' })
+  tasks: Tasks[];
 
   toJSON() {
     const attributes = { ...this.get() };

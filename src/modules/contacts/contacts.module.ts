@@ -9,6 +9,7 @@ import { TagsModule } from '../tags/tags.module';
 import { AuthModule } from '../auth/auth.module';
 import { CitiesModule } from '../cities/cities.module';
 import { ContactSourceModule } from '../contact-source/contact-source.module';
+import { ContactStatusModule } from '../contact-status/contact-status.module';
 
 @Module({
   controllers: [ContactsController],
@@ -16,6 +17,7 @@ import { ContactSourceModule } from '../contact-source/contact-source.module';
     forwardRef(() => UsersModule),
     forwardRef(() => CitiesModule),
     forwardRef(() => ContactSourceModule),
+    forwardRef(() => ContactStatusModule),
     AuthModule,
     SequelizeModule.forFeature([Contacts, ContactPhones]),
     TagsModule,

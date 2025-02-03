@@ -13,6 +13,17 @@ import { ContactSourceModule } from './modules/contact-source/contact-source.mod
 import { EventsModule } from './modules/events/events.module';
 import { TasksModule } from './modules/tasks/tasks.module';
 import { GatewaysModule } from './gateway/gateways.module';
+import { ContactStatusModule } from './modules/contact-status/contact-status.module';
+import { Contacts } from './modules/contacts/models/contacts.model';
+import { ContactPhones } from './modules/contacts/models/contact-phones.model';
+import { Tags } from './modules/tags/tags.model';
+import { ContactTag } from './modules/tags/contact-tag.model';
+import { Cities } from './modules/cities/cities.model';
+import { ContactSources } from './modules/contact-source/contact-source.model';
+import { Comments } from './modules/comments/comments.model';
+import { Events } from './modules/events/events.model';
+import { Tasks } from './modules/tasks/tasks.model';
+import { ContactStatuses } from './modules/contact-status/contact-status.model';
 
 @Module({
   imports: [
@@ -35,15 +46,16 @@ import { GatewaysModule } from './gateway/gateways.module';
         synchronize: true, // DEV only
         models: [
           Users,
-          // Contacts,
-          // ContactPhones,
-          // Tags,
-          // ContactTag,
-          // Cities,
-          // ContactSources,
-          // Events,
-          // Comments,
-          // Tasks,
+          Contacts,
+          ContactPhones,
+          Tags,
+          ContactTag,
+          Cities,
+          ContactSources,
+          Events,
+          Comments,
+          Tasks,
+          ContactStatuses,
         ],
       }),
     }),
@@ -57,6 +69,7 @@ import { GatewaysModule } from './gateway/gateways.module';
     EventsModule,
     TagsModule,
     TasksModule,
+    ContactStatusModule,
     GatewaysModule,
   ],
 })
