@@ -6,6 +6,7 @@ import { CitiesController } from './cities.controller';
 import { AuthModule } from '../auth/auth.module';
 import { UsersModule } from '../users/users.module';
 import { CitiesService } from './cities.service';
+import { GatewaysModule } from 'src/gateway/gateways.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { CitiesService } from './cities.service';
     forwardRef(() => UsersModule),
     forwardRef(() => ContactsModule),
     AuthModule,
+    GatewaysModule,
   ],
   controllers: [CitiesController],
   providers: [CitiesService],
