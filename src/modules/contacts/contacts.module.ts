@@ -11,6 +11,7 @@ import { CitiesModule } from '../cities/cities.module';
 import { ContactSourceModule } from '../contact-source/contact-source.module';
 import { ContactStatusModule } from '../contact-status/contact-status.module';
 import { GatewaysModule } from 'src/gateway/gateways.module';
+import { ContactReassignments } from './models/contact-reassignments.model';
 
 @Module({
   controllers: [ContactsController],
@@ -20,7 +21,11 @@ import { GatewaysModule } from 'src/gateway/gateways.module';
     forwardRef(() => ContactSourceModule),
     forwardRef(() => ContactStatusModule),
     AuthModule,
-    SequelizeModule.forFeature([Contacts, ContactPhones]),
+    SequelizeModule.forFeature([
+      Contacts,
+      ContactPhones,
+      ContactReassignments,
+    ]),
     TagsModule,
     GatewaysModule,
   ],

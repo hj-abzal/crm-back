@@ -1,4 +1,10 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  Logger,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common';
 import { Contacts } from './models/contacts.model';
 import { ContactPhones } from './models/contact-phones.model';
 import { InjectModel } from '@nestjs/sequelize';
@@ -6,7 +12,6 @@ import { Users } from '../users/users.model';
 import { CreateContactDto } from './dto/create-contact.dto';
 import { Tags } from '../tags/tags.model';
 import { UpdateContactDto } from './dto/update-contact.dto';
-import { UpdatePhoneDto } from './dto/update-phone.dto';
 import { Cities } from '../cities/cities.model';
 import { ContactSources } from '../contact-source/contact-source.model';
 import { Events } from '../events/events.model';
@@ -15,6 +20,7 @@ import { Tasks } from '../tasks/tasks.model';
 import { ContactStatuses } from '../contact-status/contact-status.model';
 import { Op } from 'sequelize';
 import { AppGateway } from '../../gateway/app.gateway';
+import { ContactReassignments } from './models/contact-reassignments.model';
 
 @Injectable()
 export class ContactsService {
@@ -34,6 +40,8 @@ export class ContactsService {
     private readonly sourcesRepository: typeof ContactSources,
     @InjectModel(ContactStatuses)
     private readonly statusesRepository: typeof ContactStatuses,
+    @InjectModel(ContactReassignments)
+    private readonly contactReassignmentsRepository: typeof ContactReassignments,
     private readonly appGateway: AppGateway,
   ) {}
 
@@ -46,6 +54,7 @@ export class ContactsService {
     contacts: Contacts[];
     totalCount: number;
     lastUpdatedAt: string | null;
+    reassignments: ContactReassignments[];
   }> {
     this.logger.log(`Fetching contacts - page: ${page}, limit: ${limit}`);
     try {
@@ -65,6 +74,24 @@ export class ContactsService {
 
       if (managerId) {
         whereClause.managerId = managerId;
+      }
+
+      let reassignments: ContactReassignments[] = [];
+      if (lastUpdated && managerId) {
+        reassignments = await this.contactReassignmentsRepository.findAll({
+          where: {
+            oldManagerId: managerId,
+            reassignedAt: {
+              [Op.gt]: new Date(lastUpdated),
+            },
+          },
+          include: [
+            {
+              model: Contacts,
+              paranoid: false,
+            },
+          ],
+        });
       }
 
       const options: any = {
@@ -99,6 +126,7 @@ export class ContactsService {
         lastUpdatedAt: contactsLastUpdatedAt
           ? (contactsLastUpdatedAt as Date).toISOString()
           : null,
+        reassignments,
       };
     } catch (error) {
       this.logger.error('Error fetching contacts', error);
@@ -211,68 +239,19 @@ export class ContactsService {
       }
 
       const createdContact = await this.getOne(contact.contactId);
+      if (createdContact.managerId) {
+        this.appGateway.server
+          .to(`manager_${createdContact.managerId}`)
+          .emit('contact_created', { payload: createdContact });
+      }
 
-      // Emit contact_created event
-      this.appGateway.server.emit('contact_created', {
-        payload: createdContact,
-      });
+      this.appGateway.server
+        .to('admin')
+        .emit('contact_created', { payload: createdContact });
 
       return createdContact;
     } catch (error) {
       this.logger.error('Error creating contact', error);
-      throw error;
-    }
-  }
-
-  async addTagsToContact(
-    contactId: number,
-    tagIds: number[],
-  ): Promise<Contacts> {
-    this.logger.log(`Adding tags to contact ID: ${contactId}`);
-    try {
-      const contact = await this.contactsRepository.findByPk(contactId, {
-        include: [
-          {
-            model: Tags,
-          },
-        ],
-      });
-
-      if (!contact) {
-        throw new NotFoundException(`Contact with ID ${contactId} not found`);
-      }
-
-      if (tagIds?.length) {
-        const tags = await this.tagsRepository.findAll({
-          where: { tagId: tagIds },
-        });
-
-        if (!tags.length) {
-          throw new NotFoundException(`Tags not found`);
-        }
-
-        await contact.$set('tags', tags);
-      } else {
-        await contact.$set('tags', []);
-      }
-
-      const updatedContact = await this.contactsRepository.findByPk(contactId, {
-        include: [
-          {
-            model: Tags,
-            through: { attributes: [] },
-          },
-        ],
-      });
-
-      // Emit contact_tags_updated event
-      this.appGateway.server.emit('contact_tags_updated', {
-        payload: { contactId, tags: updatedContact.tags },
-      });
-
-      return updatedContact;
-    } catch (error) {
-      this.logger.error(`Error adding tags to contact ID: ${contactId}`, error);
       throw error;
     }
   }
@@ -283,9 +262,6 @@ export class ContactsService {
   ): Promise<Contacts> {
     this.logger.log(`Updating contact with ID: ${contactId}`);
     try {
-      const { fullName, managerId, cityId, sourceId, birthDate } =
-        updateContactDto;
-
       const contact = await this.contactsRepository.findByPk(contactId, {
         include: [{ model: ContactPhones }, { model: Users, as: 'manager' }],
       });
@@ -294,160 +270,143 @@ export class ContactsService {
         throw new NotFoundException(`Contact with ID ${contactId} not found`);
       }
 
-      if (managerId !== undefined) {
-        if (managerId === null) {
+      let oldManagerId;
+
+      // Track manager reassignment
+      if (
+        updateContactDto.managerId !== undefined &&
+        updateContactDto.managerId !== contact.managerId
+      ) {
+        await this.contactReassignmentsRepository.create({
+          contactId,
+          oldManagerId: contact.managerId,
+          newManagerId: updateContactDto.managerId,
+        });
+        oldManagerId = contact.managerId;
+      }
+
+      // Update basic fields
+      if (updateContactDto.managerId !== undefined) {
+        if (updateContactDto.managerId === null) {
           contact.managerId = null;
         } else {
-          const manager = await this.usersRepository.findByPk(managerId);
+          const manager = await this.usersRepository.findByPk(
+            updateContactDto.managerId,
+          );
           if (!manager) {
             throw new NotFoundException(
-              `Manager with ID ${managerId} does not exist`,
+              `Manager with ID ${updateContactDto.managerId} does not exist`,
             );
           }
-          contact.managerId = managerId;
+          contact.managerId = updateContactDto.managerId;
         }
       }
 
-      if (cityId !== undefined) {
-        if (cityId === null) {
+      if (updateContactDto.cityId !== undefined) {
+        if (updateContactDto.cityId === null) {
           contact.cityId = null;
         } else {
-          const city = await this.citiesRepository.findByPk(cityId);
+          const city = await this.citiesRepository.findByPk(
+            updateContactDto.cityId,
+          );
           if (!city) {
             throw new NotFoundException(
-              `City with ID ${cityId} does not exist`,
+              `City with ID ${updateContactDto.cityId} does not exist`,
             );
           }
-          contact.cityId = cityId;
+          contact.cityId = updateContactDto.cityId;
         }
       }
 
-      if (sourceId !== undefined) {
-        if (sourceId === null) {
+      if (updateContactDto.sourceId !== undefined) {
+        if (updateContactDto.sourceId === null) {
           contact.sourceId = null;
         } else {
-          const source = await this.sourcesRepository.findByPk(sourceId);
+          const source = await this.sourcesRepository.findByPk(
+            updateContactDto.sourceId,
+          );
           if (!source) {
             throw new NotFoundException(
-              `Source with ID ${sourceId} does not exist`,
+              `Source with ID ${updateContactDto.sourceId} does not exist`,
             );
           }
-          contact.sourceId = sourceId;
+          contact.sourceId = updateContactDto.sourceId;
         }
       }
 
-      if (fullName !== contact.fullName) {
-        contact.fullName = fullName;
+      if (updateContactDto.fullName !== undefined) {
+        contact.fullName = updateContactDto.fullName;
       }
 
-      contact.birthDate = birthDate;
+      if (updateContactDto.birthDate !== undefined) {
+        contact.birthDate = updateContactDto.birthDate;
+      }
 
+      await contact.save();
+
+      // Update phones if provided
+      if (updateContactDto.phones) {
+        await this.contactPhonesRepository.destroy({ where: { contactId } });
+        await this.contactPhonesRepository.bulkCreate(
+          updateContactDto.phones.map((phone) => ({
+            ...phone,
+            contactId,
+          })),
+        );
+      }
+
+      // Update tags if provided
+      if (updateContactDto.tagIds !== undefined) {
+        if (updateContactDto.tagIds.length) {
+          const tags = await this.tagsRepository.findAll({
+            where: { tagId: updateContactDto.tagIds },
+          });
+
+          // Verify all requested tags were found
+          if (tags.length !== updateContactDto.tagIds.length) {
+            throw new HttpException(
+              'One or more tags not found',
+              HttpStatus.NOT_FOUND,
+            );
+          }
+
+          await contact.$set('tags', tags);
+        } else {
+          // If empty array provided, clear all tags
+          await contact.$set('tags', []);
+        }
+      }
+
+      contact.changed('updatedAt', true);
       await contact.save();
 
       const updatedContact = await this.getOne(contactId);
 
-      // Emit contact_updated event
-      this.appGateway.server.emit('contact_updated', {
-        payload: updatedContact,
-      });
+      if (updatedContact.managerId) {
+        this.appGateway.server
+          .to(`manager_${updatedContact.managerId}`)
+          .emit('contact_updated', { payload: updatedContact });
+      }
+
+      if (oldManagerId) {
+        this.appGateway.server
+          .to(`manager_${oldManagerId}`)
+          .emit('contact_reassigned', { payload: updatedContact });
+      }
+
+      this.appGateway.server
+        .to('admin')
+        .emit('contact_updated', { payload: updatedContact });
 
       return updatedContact;
     } catch (error) {
+      if (error instanceof HttpException) throw error;
       this.logger.error(`Error updating contact ID: ${contactId}`, error);
-      throw error;
+      throw new Error('Failed to update contact');
     }
   }
 
-  async updateContactPhones(
-    contactId: number,
-    phones: UpdatePhoneDto[],
-  ): Promise<ContactPhones[]> {
-    this.logger.log(`Updating phones for contact ID: ${contactId}`);
-    try {
-      const contact = await this.contactsRepository.findByPk(contactId);
-
-      if (!contact) {
-        throw new NotFoundException(`Contact with ID ${contactId} not found`);
-      }
-
-      const updatedPhones: ContactPhones[] = [];
-
-      for (const phone of phones) {
-        if (phone.phoneId) {
-          await this.contactPhonesRepository.update(
-            { phoneNumber: phone.phoneNumber },
-            { where: { phoneId: phone.phoneId, contactId } },
-          );
-          const updatedPhone = await this.contactPhonesRepository.findByPk(
-            phone.phoneId,
-          );
-          updatedPhones.push(updatedPhone);
-        } else {
-          const newPhone = await this.contactPhonesRepository.create({
-            contactId: contact.contactId,
-            phoneNumber: phone.phoneNumber,
-          });
-          updatedPhones.push(newPhone);
-        }
-      }
-
-      // Emit contact_phones_updated event
-      this.appGateway.server.emit('contact_phones_updated', {
-        payload: { contactId, phones: updatedPhones },
-      });
-
-      return updatedPhones;
-    } catch (error) {
-      this.logger.error(
-        `Error updating phones for contact ID: ${contactId}`,
-        error,
-      );
-      throw error;
-    }
-  }
-
-  async deleteContactPhones(
-    contactId: number,
-    phoneIds: number[],
-  ): Promise<void> {
-    this.logger.log(`Deleting phones for contact ID: ${contactId}`);
-    try {
-      const contact = await this.contactsRepository.findByPk(contactId, {
-        include: [ContactPhones],
-      });
-
-      if (!contact) {
-        throw new NotFoundException(`Contact with ID ${contactId} not found`);
-      }
-
-      const phonesToDelete = await this.contactPhonesRepository.findAll({
-        where: { contactId, phoneId: phoneIds },
-      });
-
-      if (phonesToDelete.length !== phoneIds.length) {
-        throw new NotFoundException(
-          `One or more phone IDs not found for this contact`,
-        );
-      }
-
-      await this.contactPhonesRepository.destroy({
-        where: { phoneId: phoneIds },
-      });
-
-      // Emit contact_phones_deleted event
-      this.appGateway.server.emit('contact_phones_deleted', {
-        payload: { contactId, phoneIds },
-      });
-    } catch (error) {
-      this.logger.error(
-        `Error deleting phones for contact ID: ${contactId}`,
-        error,
-      );
-      throw error;
-    }
-  }
-
-  async deleteContact(contactId: number): Promise<{ message: string }> {
+  async deleteContact(contactId: number): Promise<void> {
     this.logger.log(`Deleting contact with ID: ${contactId}`);
     try {
       const contact = await this.contactsRepository.findByPk(contactId, {
@@ -458,21 +417,25 @@ export class ContactsService {
         throw new NotFoundException(`Contact with ID ${contactId} not found`);
       }
 
+      const managerId = contact.managerId; // Store managerId before deletion
+
       await this.contactsRepository.destroy({
         where: { contactId },
       });
 
-      // Emit contact_deleted event
-      this.appGateway.server.emit('contact_deleted', {
-        payload: { contactId },
-      });
+      if (managerId) {
+        this.appGateway.server
+          .to(`manager_${managerId}`)
+          .emit('contact_deleted', { payload: { contactId } });
+      }
 
-      return {
-        message: `Contact with ID ${contactId} and its phones were deleted successfully`,
-      };
+      this.appGateway.server
+        .to('admin')
+        .emit('contact_deleted', { payload: { contactId } });
     } catch (error) {
+      if (error instanceof HttpException) throw error;
       this.logger.error(`Error deleting contact ID: ${contactId}`, error);
-      throw error;
+      throw new Error('Failed to delete contact');
     }
   }
 }

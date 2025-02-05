@@ -1,4 +1,7 @@
 import {
+  AfterBulkCreate,
+  AfterBulkDestroy,
+  AfterBulkUpdate,
   AfterCreate,
   AfterDestroy,
   AfterUpdate,
@@ -38,17 +41,4 @@ export class ContactPhones extends Model<ContactPhones> {
 
   @BelongsTo(() => Contacts)
   contact: Contacts;
-
-  @AfterUpdate
-  @AfterCreate
-  @AfterDestroy
-  static async touchParent(instance: ContactPhones) {
-    const parent = await Contacts.findByPk(instance.contactId, {
-      paranoid: false,
-    });
-    if (parent) {
-      parent.changed('updatedAt', true);
-      await parent.save({ silent: false });
-    }
-  }
 }

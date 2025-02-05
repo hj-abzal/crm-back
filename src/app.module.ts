@@ -24,6 +24,7 @@ import { Comments } from './modules/comments/comments.model';
 import { Events } from './modules/events/events.model';
 import { Tasks } from './modules/tasks/tasks.model';
 import { ContactStatuses } from './modules/contact-status/contact-status.model';
+import { ContactReassignments } from './modules/contacts/models/contact-reassignments.model';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { ContactStatuses } from './modules/contact-status/contact-status.model';
           Users,
           Contacts,
           ContactPhones,
+          ContactReassignments,
           Tags,
           ContactTag,
           Cities,

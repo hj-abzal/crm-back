@@ -5,6 +5,11 @@ import { INestApplication, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { Server, Socket } from 'socket.io';
+import { Users } from 'src/modules/users/users.model';
+
+export interface AuthenticatedSocket extends Socket {
+  user: Partial<Users>;
+}
 
 export class AuthenticatedSocketIoAdapter extends IoAdapter {
   private readonly logger = new Logger(AuthenticatedSocketIoAdapter.name);

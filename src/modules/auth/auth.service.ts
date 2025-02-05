@@ -50,13 +50,14 @@ export class AuthService {
     this.logger.log(`Logging in user: ${dto.username}`);
     const user = await this.validateUser(dto);
     if (user) {
-      const { userId, firstName, lastName, username } = user;
+      const { userId, firstName, lastName, username, role } = user;
       const accessToken = this.jwtService.sign(
         {
           userId,
           firstName,
           lastName,
           username,
+          role,
         },
         {
           expiresIn: this.configService.get('EXPIRES_IN') || '3d',

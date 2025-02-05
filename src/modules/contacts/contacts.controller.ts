@@ -8,7 +8,6 @@ import {
   Logger,
   Param,
   ParseIntPipe,
-  Patch,
   Post,
   Put,
   Query,
@@ -19,9 +18,6 @@ import { CreateContactDto } from './dto/create-contact.dto';
 import { ContactsService } from './contacts.service';
 import { Contacts } from './models/contacts.model';
 import { UpdateContactDto } from './dto/update-contact.dto';
-import { UpdatePhoneDto } from './dto/update-phone.dto';
-import { ContactPhones } from './models/contact-phones.model';
-import { DeletePhoneDto } from './dto/delete-phone.dto';
 import { AuthGuard, ExpressGuarded } from '../auth/guards/auth.guard';
 import { USER_ROLE } from '../users/user-role.enums';
 
@@ -75,15 +71,6 @@ export class ContactsController {
     return this.contactsService.getOne(+contactId);
   }
 
-  @Post(':contactId/tags')
-  @UseGuards(AuthGuard)
-  async addTagsToContact(
-    @Param('contactId') contactId: number,
-    @Body('tagIds') tagIds: number[],
-  ) {
-    return this.contactsService.addTagsToContact(contactId, tagIds);
-  }
-
   @Put(':contactId')
   @UseGuards(AuthGuard)
   async updateContact(
@@ -93,31 +80,11 @@ export class ContactsController {
     return this.contactsService.updateContact(contactId, updateContactDto);
   }
 
-  @Patch(':contactId/phones')
-  @UseGuards(AuthGuard)
-  async updatePhones(
-    @Param('contactId', ParseIntPipe) contactId: number,
-    @Body() phones: UpdatePhoneDto[],
-  ): Promise<ContactPhones[]> {
-    return this.contactsService.updateContactPhones(contactId, phones);
-  }
-
-  @Delete(':contactId/phones')
-  @UseGuards(AuthGuard)
-  async deletePhones(
-    @Param('contactId', ParseIntPipe) contactId: number,
-    @Body() deletePhoneDto: DeletePhoneDto,
-  ): Promise<{ message: string }> {
-    const { phoneIds } = deletePhoneDto;
-    await this.contactsService.deleteContactPhones(contactId, phoneIds);
-    return { message: 'Phone numbers deleted successfully' };
-  }
-
   @Delete(':contactId')
   @UseGuards(AuthGuard)
   async deleteContact(
     @Param('contactId', ParseIntPipe) contactId: number,
-  ): Promise<{ message: string }> {
+  ): Promise<void> {
     return this.contactsService.deleteContact(contactId);
   }
 }

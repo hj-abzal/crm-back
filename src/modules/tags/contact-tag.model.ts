@@ -6,6 +6,9 @@ import {
   DataType,
   AfterCreate,
   AfterDestroy,
+  AfterBulkCreate,
+  AfterBulkUpdate,
+  AfterBulkDestroy,
 } from 'sequelize-typescript';
 import { Contacts } from '../contacts/models/contacts.model';
 import { Tags } from './tags.model';
@@ -19,16 +22,4 @@ export class ContactTag extends Model<ContactTag> {
   @ForeignKey(() => Tags)
   @Column({ type: DataType.INTEGER, allowNull: false, field: 'tag_id' })
   tagId: number;
-
-  @AfterCreate
-  @AfterDestroy
-  static async touchParent(instance: ContactTag) {
-    const parent = await Contacts.findByPk(instance.contactId, {
-      paranoid: false,
-    });
-    if (parent) {
-      parent.changed('updatedAt', true);
-      await parent.save({ silent: false });
-    }
-  }
 }
