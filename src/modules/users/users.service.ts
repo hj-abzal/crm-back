@@ -54,7 +54,7 @@ export class UsersService {
       };
 
       const createdUser = await this.usersRepository.create(user);
-      this.logger.log(`Successfully created user with ID: ${createdUser.id}`);
+      this.logger.log(`Successfully created user with ID: ${createdUser.userId}`);
 
       // Emit user_created event
       this.appGateway.server.emit('user_created', {

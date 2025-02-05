@@ -10,6 +10,7 @@ import { AuthModule } from '../auth/auth.module';
 import { CitiesModule } from '../cities/cities.module';
 import { ContactSourceModule } from '../contact-source/contact-source.module';
 import { ContactStatusModule } from '../contact-status/contact-status.module';
+import { GatewaysModule } from 'src/gateway/gateways.module';
 
 @Module({
   controllers: [ContactsController],
@@ -21,6 +22,7 @@ import { ContactStatusModule } from '../contact-status/contact-status.module';
     AuthModule,
     SequelizeModule.forFeature([Contacts, ContactPhones]),
     TagsModule,
+    GatewaysModule,
   ],
   exports: [SequelizeModule],
   providers: [ContactsService],

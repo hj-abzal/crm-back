@@ -19,7 +19,7 @@ export class ContactSourcesService {
     this.logger.log(`Creating contact source with name: ${name}`);
     try {
       const source = await this.contactSourcesRepository.create({ name });
-      this.logger.log(`Successfully created source with ID: ${source.id}`);
+      this.logger.log(`Successfully created source with ID: ${source.sourceId}`);
 
       // Emit source_created event
       this.appGateway.server.emit('source_created', {

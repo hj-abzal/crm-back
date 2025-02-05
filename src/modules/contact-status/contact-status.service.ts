@@ -19,7 +19,7 @@ export class ContactStatusService {
     this.logger.log(`Creating contact status with name: ${name}`);
     try {
       const status = await this.contactStatusesRepository.create({ name });
-      this.logger.log(`Successfully created status with ID: ${status.id}`);
+      this.logger.log(`Successfully created status with ID: ${status.statusId}`);
 
       // Emit status_created event
       this.appGateway.server.emit('status_created', {
