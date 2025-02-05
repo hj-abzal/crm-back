@@ -1,8 +1,7 @@
-import { HttpException, HttpStatus, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { ContactStatuses } from './contact-status.model';
 import { AppGateway } from '../../gateway/app.gateway';
-import dayjs from 'dayjs';
 import { Op } from 'sequelize';
 
 @Injectable()
@@ -19,12 +18,13 @@ export class ContactStatusService {
     this.logger.log(`Creating contact status with name: ${name}`);
     try {
       const status = await this.contactStatusesRepository.create({ name });
-      this.logger.log(`Successfully created status with ID: ${status.statusId}`);
+      this.logger.log(
+        `Successfully created status with ID: ${status.statusId}`,
+      );
 
       // Emit status_created event
       this.appGateway.server.emit('status_created', {
         payload: status,
-        lastUpdatedAt: dayjs().toISOString(),
       });
 
       return status;
@@ -34,19 +34,36 @@ export class ContactStatusService {
     }
   }
 
-  async getAllStatuses(lastUpdated?: string): Promise<ContactStatuses[]> {
+  async getAllStatuses(
+    lastUpdated?: string,
+  ): Promise<{ lastUpdatedAt: string | null; payload: ContactStatuses[] }> {
     this.logger.log('Fetching all contact statuses');
     try {
+      const statusesLastUpdatedAt = await this.contactStatusesRepository.max(
+        'updatedAt',
+        {
+          paranoid: false,
+        },
+      );
+
       const options: any = {};
       if (lastUpdated) {
         options.where = {
           updatedAt: {
-            [Op.gte]: lastUpdated,
+            [Op.gt]: new Date(lastUpdated),
           },
         };
         options.paranoid = false;
       }
-      return await this.contactStatusesRepository.findAll(options);
+
+      const statuses = await this.contactStatusesRepository.findAll(options);
+
+      return {
+        lastUpdatedAt: statusesLastUpdatedAt
+          ? (statusesLastUpdatedAt as Date).toISOString()
+          : null,
+        payload: statuses,
+      };
     } catch (error) {
       this.logger.error('Error fetching all statuses', error);
       throw new Error('Failed to fetch statuses');
@@ -73,17 +90,16 @@ export class ContactStatusService {
       // Emit status_updated event
       this.appGateway.server.emit('status_updated', {
         payload: status,
-        lastUpdatedAt: dayjs().toISOString(),
       });
 
       return status;
     } catch (error) {
       this.logger.error(`Error updating status ID: ${statusId}`, error);
-      throw new Error('Failed to update status');
+      throw error;
     }
   }
 
-  async deleteStatus(statusId: number): Promise<{ message: string }> {
+  async deleteStatus(statusId: number): Promise<void> {
     this.logger.log(`Attempting to delete status with ID: ${statusId}`);
     try {
       const status = await this.contactStatusesRepository.findByPk(statusId);
@@ -102,13 +118,10 @@ export class ContactStatusService {
       // Emit status_deleted event
       this.appGateway.server.emit('status_deleted', {
         payload: { statusId },
-        lastUpdatedAt: dayjs().toISOString(),
       });
-
-      return { message: `Status with ID ${statusId} deleted successfully` };
     } catch (error) {
       this.logger.error(`Error deleting status ID: ${statusId}`, error);
-      throw new Error('Failed to delete status');
+      throw error;
     }
   }
 }

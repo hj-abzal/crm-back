@@ -7,6 +7,7 @@ import { CodeUtil } from '../../utils/code.util';
 import { AppGateway } from '../../gateway/app.gateway';
 import dayjs from 'dayjs';
 import { Op } from 'sequelize';
+import { EventPayload } from './user.interface';
 
 @Injectable()
 export class UsersService {
@@ -54,7 +55,9 @@ export class UsersService {
       };
 
       const createdUser = await this.usersRepository.create(user);
-      this.logger.log(`Successfully created user with ID: ${createdUser.userId}`);
+      this.logger.log(
+        `Successfully created user with ID: ${createdUser.userId}`,
+      );
 
       // Emit user_created event
       this.appGateway.server.emit('user_created', {
@@ -72,31 +75,36 @@ export class UsersService {
     }
   }
 
-  async getAll(lastUpdated: string): Promise<Users[]> {
+  async getAll(lastUpdatedParams: string): Promise<EventPayload<Users[]>> {
     try {
       this.logger.log(
         `Requesting to get all users, lastUpdated: ${
-          lastUpdated || 'not provided'
+          lastUpdatedParams || 'not provided'
         }`,
       );
 
-      if (lastUpdated) {
-        const whereClause = lastUpdated
-          ? {
-              [Op.or]: [
-                { updatedAt: { [Op.gte]: new Date(lastUpdated) } },
-                { deletedAt: { [Op.gte]: new Date(lastUpdated) } },
-              ],
-            }
-          : {};
+      const usersLastUpdatedAt = await this.usersRepository.max('updatedAt', {
+        paranoid: false,
+      });
 
-        return await this.usersRepository.findAll({
-          where: whereClause,
-          paranoid: false,
-        });
+      if (lastUpdatedParams) {
+        return {
+          lastUpdatedAt: usersLastUpdatedAt
+            ? (usersLastUpdatedAt as Date).toISOString()
+            : null,
+          payload: await this.usersRepository.findAll({
+            where: { updatedAt: { [Op.gt]: new Date(lastUpdatedParams) } },
+            paranoid: false,
+          }),
+        };
+      } else {
+        return {
+          lastUpdatedAt: usersLastUpdatedAt
+            ? (usersLastUpdatedAt as Date).toISOString()
+            : null,
+          payload: await this.usersRepository.findAll(),
+        };
       }
-
-      return await this.usersRepository.findAll();
     } catch (error) {
       this.logger.error(`Error getting all users`, error);
       throw new Error('Failed to get users');
@@ -147,7 +155,6 @@ export class UsersService {
       // Emit user_updated event
       this.appGateway.server.emit('user_updated', {
         payload: updatedUser,
-        lastUpdatedAt: dayjs().toISOString(),
       });
 
       return updatedUser;
@@ -174,7 +181,6 @@ export class UsersService {
       // Emit user_deleted event
       this.appGateway.server.emit('user_deleted', {
         payload: { userId: +userId },
-        lastUpdatedAt: dayjs().toISOString(),
       });
     } catch (error) {
       this.logger.error(`Error deleting userId: ${userId}`, error);

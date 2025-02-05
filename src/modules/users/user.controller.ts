@@ -18,7 +18,6 @@ import { CreateUserDto, UpdateUserDto } from './create-user.dto';
 import { EventPayload } from './user.interface';
 import { Users } from './users.model';
 import { AuthGuard, ExpressGuarded, Roles } from '../auth/guards/auth.guard';
-import dayjs from 'dayjs';
 import { USER_ROLE } from './user-role.enums';
 
 @Controller('users')
@@ -34,11 +33,7 @@ export class UserController {
     @Query('lastUpdatedAt') lastUpdated?: string,
   ): Promise<EventPayload<Users[]>> {
     try {
-      const users = await this.usersService.getAll(lastUpdated);
-      return {
-        lastUpdatedAt: dayjs().toISOString(),
-        payload: users,
-      };
+      return this.usersService.getAll(lastUpdated);
     } catch (e) {
       throw new HttpException(
         'Error while fetching all users',
@@ -50,13 +45,9 @@ export class UserController {
   @Get(':userId')
   @UseGuards(AuthGuard)
   @Roles(USER_ROLE.ADMIN)
-  async getOne(@Param('userId') userId: string): Promise<EventPayload<Users>> {
+  async getOne(@Param('userId') userId: string): Promise<Users> {
     try {
-      const user = await this.usersService.getOne(userId);
-      return {
-        lastUpdatedAt: dayjs().toISOString(),
-        payload: user,
-      };
+      return await this.usersService.getOne(userId);
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;
@@ -76,13 +67,9 @@ export class UserController {
   @Post('')
   @UseGuards(AuthGuard)
   @Roles(USER_ROLE.ADMIN)
-  async register(@Body() dto: CreateUserDto): Promise<EventPayload<Users>> {
+  async register(@Body() dto: CreateUserDto): Promise<Users> {
     try {
-      const newUser = await this.usersService.create(dto);
-      return {
-        lastUpdatedAt: dayjs().toISOString(),
-        payload: newUser,
-      };
+      return await this.usersService.create(dto);
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;
@@ -112,7 +99,7 @@ export class UserController {
     @Param('userId') userId: string,
     @Body() userDto: UpdateUserDto,
     @Req() request: ExpressGuarded,
-  ): Promise<EventPayload<Users>> {
+  ): Promise<Users> {
     const authenticatedUserId = request.user.userId;
     const authenticatedUserRole = request.user.role;
     if (
@@ -126,11 +113,7 @@ export class UserController {
     }
 
     try {
-      const updatedUser = await this.usersService.updateOne(userId, userDto);
-      return {
-        lastUpdatedAt: dayjs().toISOString(),
-        payload: updatedUser,
-      };
+      return await this.usersService.updateOne(userId, userDto);
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;
@@ -150,15 +133,10 @@ export class UserController {
   @Delete(':userId')
   @UseGuards(AuthGuard)
   @Roles(USER_ROLE.ADMIN)
-  async deleteOne(
-    @Param('userId') userId: string,
-  ): Promise<EventPayload<null>> {
+  async deleteOne(@Param('userId') userId: string): Promise<null> {
     try {
       await this.usersService.deleteOne(userId);
-      return {
-        lastUpdatedAt: dayjs().toISOString(),
-        payload: null,
-      };
+      return null;
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;

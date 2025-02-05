@@ -17,8 +17,6 @@ import { ContactStatusService } from './contact-status.service';
 import { ContactStatuses } from './contact-status.model';
 import { USER_ROLE } from '../users/user-role.enums';
 import { AuthGuard, Roles } from '../auth/guards/auth.guard';
-import { EventPayload } from '../users/user.interface';
-import dayjs from 'dayjs';
 
 @Controller('statuses')
 export class ContactStatusController {
@@ -29,15 +27,9 @@ export class ContactStatusController {
   @Post()
   @UseGuards(AuthGuard)
   @Roles(USER_ROLE.ADMIN)
-  async createStatus(
-    @Body('name') name: string,
-  ): Promise<EventPayload<ContactStatuses>> {
+  async createStatus(@Body('name') name: string): Promise<ContactStatuses> {
     try {
-      const status = await this.contactStatusService.createStatus(name);
-      return {
-        lastUpdatedAt: dayjs().toISOString(),
-        payload: status,
-      };
+      return await this.contactStatusService.createStatus(name);
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;
@@ -58,13 +50,9 @@ export class ContactStatusController {
   @UseGuards(AuthGuard)
   async getAllStatuses(
     @Query('lastUpdatedAt') lastUpdated?: string,
-  ): Promise<EventPayload<ContactStatuses[]>> {
+  ): Promise<{ lastUpdatedAt: string | null; payload: ContactStatuses[] }> {
     try {
-      const statuses = await this.contactStatusService.getAllStatuses(lastUpdated);
-      return {
-        lastUpdatedAt: dayjs().toISOString(),
-        payload: statuses,
-      };
+      return await this.contactStatusService.getAllStatuses(lastUpdated);
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;
@@ -87,13 +75,9 @@ export class ContactStatusController {
   async updateStatus(
     @Param('statusId', ParseIntPipe) statusId: number,
     @Body('name') name: string,
-  ): Promise<EventPayload<ContactStatuses>> {
+  ): Promise<ContactStatuses> {
     try {
-      const status = await this.contactStatusService.updateStatus(statusId, name);
-      return {
-        lastUpdatedAt: dayjs().toISOString(),
-        payload: status,
-      };
+      return await this.contactStatusService.updateStatus(statusId, name);
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;
@@ -115,13 +99,10 @@ export class ContactStatusController {
   @Roles(USER_ROLE.ADMIN)
   async deleteStatus(
     @Param('statusId', ParseIntPipe) statusId: number,
-  ): Promise<EventPayload<null>> {
+  ): Promise<null> {
     try {
       await this.contactStatusService.deleteStatus(statusId);
-      return {
-        lastUpdatedAt: dayjs().toISOString(),
-        payload: null,
-      };
+      return null;
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;

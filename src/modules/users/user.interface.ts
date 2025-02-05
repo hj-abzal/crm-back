@@ -1,4 +1,4 @@
 export interface EventPayload<T> {
-  lastUpdatedAt: string;
+  lastUpdatedAt: string | null;
   payload: T;
 }

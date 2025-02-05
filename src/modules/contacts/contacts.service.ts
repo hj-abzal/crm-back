@@ -15,7 +15,6 @@ import { Tasks } from '../tasks/tasks.model';
 import { ContactStatuses } from '../contact-status/contact-status.model';
 import { Op } from 'sequelize';
 import { AppGateway } from '../../gateway/app.gateway';
-import dayjs from 'dayjs';
 
 @Injectable()
 export class ContactsService {
@@ -41,36 +40,66 @@ export class ContactsService {
   async getAll(
     page: number,
     limit: number,
-    lastUpdatedAt: Date,
-    managerId: number,
-  ): Promise<{ contacts: Contacts[]; totalCount: number }> {
+    lastUpdated?: string,
+    managerId?: number,
+  ): Promise<{
+    contacts: Contacts[];
+    totalCount: number;
+    lastUpdatedAt: string | null;
+  }> {
     this.logger.log(`Fetching contacts - page: ${page}, limit: ${limit}`);
     try {
-      const offset = (page - 1) * limit;
+      const contactsLastUpdatedAt = await this.contactsRepository.max(
+        'updatedAt',
+        {
+          paranoid: false,
+        },
+      );
+
       const whereClause: any = {};
-      if (lastUpdatedAt) {
+      if (lastUpdated) {
         whereClause.updatedAt = {
-          [Op.or]: [
-            { updatedAt: { [Op.gte]: new Date(lastUpdatedAt) } },
-            { deletedAt: { [Op.gte]: new Date(lastUpdatedAt) } },
-          ],
-        }
+          [Op.gt]: new Date(lastUpdated),
+        };
       }
 
       if (managerId) {
         whereClause.managerId = managerId;
       }
 
+      const options: any = {
+        where: whereClause,
+        include: [
+          {
+            model: ContactPhones,
+            paranoid: false,
+          },
+          {
+            model: Tags,
+            through: { attributes: [] },
+          },
+        ],
+      };
+
+      if (lastUpdated) {
+        options.paranoid = false;
+      } else {
+        options.offset = (page - 1) * limit;
+        options.limit = limit;
+      }
+
+      const contacts = await this.contactsRepository.findAll(options);
       const totalCount = await this.contactsRepository.count({
         where: whereClause,
       });
-      const contacts = await this.contactsRepository.findAll({
-        where: whereClause,
-        offset,
-        limit,
-        paranoid: lastUpdatedAt ? false : true,
-      });
-      return { contacts, totalCount };
+
+      return {
+        contacts,
+        totalCount,
+        lastUpdatedAt: contactsLastUpdatedAt
+          ? (contactsLastUpdatedAt as Date).toISOString()
+          : null,
+      };
     } catch (error) {
       this.logger.error('Error fetching contacts', error);
       throw new Error('Failed to fetch contacts');
@@ -145,7 +174,9 @@ export class ContactsService {
       if (statusId) {
         const status = await this.statusesRepository.findByPk(statusId);
         if (!status) {
-          throw new NotFoundException(`Status with ID ${statusId} does not exist`);
+          throw new NotFoundException(
+            `Status with ID ${statusId} does not exist`,
+          );
         }
       }
 
@@ -184,7 +215,6 @@ export class ContactsService {
       // Emit contact_created event
       this.appGateway.server.emit('contact_created', {
         payload: createdContact,
-        lastUpdatedAt: dayjs().toISOString(),
       });
 
       return createdContact;
@@ -238,7 +268,6 @@ export class ContactsService {
       // Emit contact_tags_updated event
       this.appGateway.server.emit('contact_tags_updated', {
         payload: { contactId, tags: updatedContact.tags },
-        lastUpdatedAt: dayjs().toISOString(),
       });
 
       return updatedContact;
@@ -285,7 +314,9 @@ export class ContactsService {
         } else {
           const city = await this.citiesRepository.findByPk(cityId);
           if (!city) {
-            throw new NotFoundException(`City with ID ${cityId} does not exist`);
+            throw new NotFoundException(
+              `City with ID ${cityId} does not exist`,
+            );
           }
           contact.cityId = cityId;
         }
@@ -318,7 +349,6 @@ export class ContactsService {
       // Emit contact_updated event
       this.appGateway.server.emit('contact_updated', {
         payload: updatedContact,
-        lastUpdatedAt: dayjs().toISOString(),
       });
 
       return updatedContact;
@@ -364,12 +394,14 @@ export class ContactsService {
       // Emit contact_phones_updated event
       this.appGateway.server.emit('contact_phones_updated', {
         payload: { contactId, phones: updatedPhones },
-        lastUpdatedAt: dayjs().toISOString(),
       });
 
       return updatedPhones;
     } catch (error) {
-      this.logger.error(`Error updating phones for contact ID: ${contactId}`, error);
+      this.logger.error(
+        `Error updating phones for contact ID: ${contactId}`,
+        error,
+      );
       throw error;
     }
   }
@@ -405,10 +437,12 @@ export class ContactsService {
       // Emit contact_phones_deleted event
       this.appGateway.server.emit('contact_phones_deleted', {
         payload: { contactId, phoneIds },
-        lastUpdatedAt: dayjs().toISOString(),
       });
     } catch (error) {
-      this.logger.error(`Error deleting phones for contact ID: ${contactId}`, error);
+      this.logger.error(
+        `Error deleting phones for contact ID: ${contactId}`,
+        error,
+      );
       throw error;
     }
   }
@@ -431,7 +465,6 @@ export class ContactsService {
       // Emit contact_deleted event
       this.appGateway.server.emit('contact_deleted', {
         payload: { contactId },
-        lastUpdatedAt: dayjs().toISOString(),
       });
 
       return {

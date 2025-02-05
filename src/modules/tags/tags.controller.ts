@@ -17,8 +17,6 @@ import { TagsService } from './tags.service';
 import { Tags } from './tags.model';
 import { USER_ROLE } from '../users/user-role.enums';
 import { AuthGuard, Roles } from '../auth/guards/auth.guard';
-import { EventPayload } from '../users/user.interface';
-import dayjs from 'dayjs';
 
 @Controller('tags')
 export class TagsController {
@@ -29,13 +27,9 @@ export class TagsController {
   @Post()
   @UseGuards(AuthGuard)
   @Roles(USER_ROLE.ADMIN)
-  async createTag(@Body('name') name: string): Promise<EventPayload<Tags>> {
+  async createTag(@Body('name') name: string): Promise<Tags> {
     try {
-      const tag = await this.tagsService.createTag(name);
-      return {
-        lastUpdatedAt: dayjs().toISOString(),
-        payload: tag,
-      };
+      return await this.tagsService.createTag(name);
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;
@@ -56,13 +50,9 @@ export class TagsController {
   @UseGuards(AuthGuard)
   async getAllTags(
     @Query('lastUpdatedAt') lastUpdated?: string,
-  ): Promise<EventPayload<Tags[]>> {
+  ): Promise<{ lastUpdatedAt: string | null; payload: Tags[] }> {
     try {
-      const tags = await this.tagsService.getAllTags(lastUpdated);
-      return {
-        lastUpdatedAt: dayjs().toISOString(),
-        payload: tags,
-      };
+      return await this.tagsService.getAllTags(lastUpdated);
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;
@@ -85,13 +75,9 @@ export class TagsController {
   async updateTag(
     @Param('tagId', ParseIntPipe) tagId: number,
     @Body('name') name: string,
-  ): Promise<EventPayload<Tags>> {
+  ): Promise<Tags> {
     try {
-      const tag = await this.tagsService.updateTag(tagId, name);
-      return {
-        lastUpdatedAt: dayjs().toISOString(),
-        payload: tag,
-      };
+      return await this.tagsService.updateTag(tagId, name);
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;
@@ -111,15 +97,10 @@ export class TagsController {
   @Delete(':tagId')
   @UseGuards(AuthGuard)
   @Roles(USER_ROLE.ADMIN)
-  async deleteTag(
-    @Param('tagId', ParseIntPipe) tagId: number,
-  ): Promise<EventPayload<null>> {
+  async deleteTag(@Param('tagId', ParseIntPipe) tagId: number): Promise<null> {
     try {
       await this.tagsService.deleteTag(tagId);
-      return {
-        lastUpdatedAt: dayjs().toISOString(),
-        payload: null,
-      };
+      return null;
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;

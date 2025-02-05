@@ -19,6 +19,10 @@ export class UpdateContactDto {
   readonly sourceId?: number;
 
   @IsOptional()
+  @IsNumber()
+  readonly statusId?: number;
+
+  @IsOptional()
   @IsDate()
   @Type(() => Date)
   birthDate?: Date;

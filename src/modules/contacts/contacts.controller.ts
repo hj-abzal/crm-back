@@ -23,9 +23,7 @@ import { UpdatePhoneDto } from './dto/update-phone.dto';
 import { ContactPhones } from './models/contact-phones.model';
 import { DeletePhoneDto } from './dto/delete-phone.dto';
 import { AuthGuard, ExpressGuarded } from '../auth/guards/auth.guard';
-import dayjs from 'dayjs';
 import { USER_ROLE } from '../users/user-role.enums';
-import { Op } from 'sequelize';
 
 @Controller('contacts')
 export class ContactsController {
@@ -38,22 +36,17 @@ export class ContactsController {
   async getAllContacts(
     @Query('page') page: number,
     @Query('limit') limit: number,
-    @Query('lastUpdatedAt') lastUpdatedAt: Date,
+    @Query('lastUpdatedAt') lastUpdatedAt: string,
     @Query('managerId') managerId: number,
     @Req() req: ExpressGuarded,
   ) {
     try {
-      const contacts = await this.contactsService.getAll(
+      return await this.contactsService.getAll(
         page || 1,
-        limit || 300,
+        limit || 1000,
         lastUpdatedAt,
         req.user.role === USER_ROLE.ADMIN ? managerId : req.user.userId,
       );
-
-      return {
-        lastUpdatedAt: dayjs().toISOString(),
-        payload: contacts,
-      };
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;
