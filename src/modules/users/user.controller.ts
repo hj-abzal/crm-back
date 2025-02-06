@@ -28,7 +28,6 @@ export class UserController {
 
   @Get('')
   @UseGuards(AuthGuard)
-  @Roles(USER_ROLE.ADMIN)
   async getAll(
     @Query('lastUpdatedAt') lastUpdated?: string,
   ): Promise<EventPayload<Users[]>> {
