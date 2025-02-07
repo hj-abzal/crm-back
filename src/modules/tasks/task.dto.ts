@@ -4,6 +4,7 @@ import {
   IsDateString,
   IsEnum,
   IsInt,
+  IsNumber,
 } from 'class-validator';
 import { TASK_STATUS } from './task-status.enum';
 
@@ -31,4 +32,8 @@ export class TaskDto {
   @IsOptional()
   @IsInt()
   contactId?: number;
+
+  @IsNumber()
+  @IsOptional()
+  managerId?: number;
 }

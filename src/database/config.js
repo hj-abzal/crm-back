@@ -10,6 +10,7 @@ module.exports = {
     username: process.env.PGUSER,
     password: process.env.PGPASSWORD,
     database: process.env.PGDATABASE,
+    logging: false,
   },
   production: {
     dialect: 'postgres',
@@ -18,5 +19,6 @@ module.exports = {
     username: process.env.PGUSER,
     password: process.env.PGPASSWORD,
     database: process.env.PGDATABASE,
+    logging: false,
   },
 };

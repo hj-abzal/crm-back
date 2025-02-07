@@ -1,19 +1,23 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { SequelizeModule } from '@nestjs/sequelize';
-import { Tasks } from './tasks.model';
+import { TasksController } from './tasks.controller';
 import { TasksService } from './tasks.service';
+import { Tasks } from './tasks.model';
+import { TaskReassignments } from './task-reassignments.model';
+import { Users } from '../users/users.model';
 import { AuthModule } from '../auth/auth.module';
 import { UsersModule } from '../users/users.module';
-import { TasksController } from './tasks.controller';
+import { GatewaysModule } from 'src/gateway/gateways.module';
 
 @Module({
-  controllers: [TasksController],
   imports: [
-    SequelizeModule.forFeature([Tasks]),
+    SequelizeModule.forFeature([Tasks, TaskReassignments, Users]),
+    GatewaysModule,
     AuthModule,
     forwardRef(() => UsersModule),
   ],
+  controllers: [TasksController],
   providers: [TasksService],
-  exports: [],
+  exports: [TasksService],
 })
 export class TasksModule {}
