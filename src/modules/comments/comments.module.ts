@@ -14,6 +14,6 @@ import { UsersModule } from '../users/users.module';
     forwardRef(() => UsersModule),
   ],
   providers: [CommentsService],
-  exports: [],
+  exports: [CommentsService],
 })
 export class CommentsModule {}

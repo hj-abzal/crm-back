@@ -8,13 +8,39 @@ import {
   Min,
   IsNumber,
   IsDate,
+  IsEnum,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { TASK_STATUS } from '../../tasks/task-status.enum';
 
 class CreateContactPhoneDto {
   @IsString()
   @IsNotEmpty()
   phoneNumber: string;
+}
+
+class CreateTaskDto {
+  @IsString()
+  @IsNotEmpty()
+  title: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
+  @IsDate()
+  @Type(() => Date)
+  dueDate?: Date;
+
+  @IsEnum(TASK_STATUS)
+  status: TASK_STATUS;
+}
+
+class CreateCommentDto {
+  @IsString()
+  @IsNotEmpty()
+  text: string;
 }
 
 export class CreateContactDto {
@@ -53,4 +79,14 @@ export class CreateContactDto {
   @IsArray()
   @IsInt({ each: true })
   tagIds?: number[];
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => CreateTaskDto)
+  task?: CreateTaskDto;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => CreateCommentDto)
+  comment?: CreateCommentDto;
 }

@@ -21,6 +21,8 @@ import { ContactStatuses } from '../contact-status/contact-status.model';
 import { Op } from 'sequelize';
 import { AppGateway } from '../../gateway/app.gateway';
 import { ContactReassignments } from './models/contact-reassignments.model';
+import { TasksService } from '../tasks/tasks.service';
+import { CommentsService } from '../comments/comments.service';
 
 @Injectable()
 export class ContactsService {
@@ -43,6 +45,8 @@ export class ContactsService {
     @InjectModel(ContactReassignments)
     private readonly contactReassignmentsRepository: typeof ContactReassignments,
     private readonly appGateway: AppGateway,
+    private readonly tasksService: TasksService,
+    private readonly commentsService: CommentsService,
   ) {}
 
   async getAll(
@@ -238,6 +242,7 @@ export class ContactsService {
         await contact.$set('tags', tags);
       }
 
+     
       const createdContact = await this.getOne(contact.contactId);
       if (createdContact.managerId) {
         this.appGateway.server
@@ -248,6 +253,29 @@ export class ContactsService {
       this.appGateway.server
         .to('admin')
         .emit('contact_created', { payload: createdContact });
+
+         // Create task if provided
+      if (createContactDto.task) {
+        const { dueDate, ...taskData } = createContactDto.task;
+        await this.tasksService.create(
+          {
+            ...taskData,
+            dueDate: dueDate?.toISOString(),
+            contactId: contact.contactId,
+          },
+          createContactDto.managerId,
+        );
+      }
+
+      // Create comment if provided
+      if (createContactDto.comment) {
+        await this.commentsService.create({
+          ...createContactDto.comment,
+          contactId: contact.contactId,
+          managerId: createContactDto.managerId,
+        });
+      }
+
 
       return createdContact;
     } catch (error) {
