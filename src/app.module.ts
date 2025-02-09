@@ -25,7 +25,7 @@ import { Events } from './modules/events/events.model';
 import { Tasks } from './modules/tasks/tasks.model';
 import { ContactStatuses } from './modules/contact-status/contact-status.model';
 import { ContactReassignments } from './modules/contacts/models/contact-reassignments.model';
-
+import { TaskReassignments } from './modules/tasks/task-reassignments.model';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -57,6 +57,7 @@ import { ContactReassignments } from './modules/contacts/models/contact-reassign
           Events,
           Comments,
           Tasks,
+          TaskReassignments,
           ContactStatuses,
         ],
       }),
