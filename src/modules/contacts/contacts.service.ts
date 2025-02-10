@@ -370,6 +370,10 @@ export class ContactsService {
         contact.birthDate = updateContactDto.birthDate;
       }
 
+      if (updateContactDto.statusId !== undefined) {
+        contact.statusId = updateContactDto.statusId;
+      }
+
       await contact.save();
 
       // Update phones if provided
