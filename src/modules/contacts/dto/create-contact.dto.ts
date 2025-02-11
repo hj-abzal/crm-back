@@ -9,13 +9,18 @@ import {
   IsNumber,
   IsDate,
   IsEnum,
+  Matches,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { TASK_STATUS } from '../../tasks/task-status.enum';
+import { PHONE_ERROR_MESSAGES } from '../constants/error-messages';
 
 class CreateContactPhoneDto {
   @IsString()
   @IsNotEmpty()
+  @Matches(/^7[0-9]{10}$/, {
+    message: PHONE_ERROR_MESSAGES.INVALID_FORMAT,
+  })
   phoneNumber: string;
 }
 

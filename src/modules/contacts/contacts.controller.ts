@@ -13,6 +13,8 @@ import {
   Query,
   Req,
   UseGuards,
+  UsePipes,
+  UseFilters,
 } from '@nestjs/common';
 import { CreateContactDto } from './dto/create-contact.dto';
 import { ContactsService } from './contacts.service';
@@ -20,8 +22,12 @@ import { Contacts } from './models/contacts.model';
 import { UpdateContactDto } from './dto/update-contact.dto';
 import { AuthGuard, ExpressGuarded } from '../auth/guards/auth.guard';
 import { USER_ROLE } from '../users/user-role.enums';
+import { PhoneValidationPipe } from './pipes/phone-validation.pipe';
+import { UpdatePhoneValidationPipe } from './pipes/update-phone-validation.pipe';
+import { PhoneValidationFilter } from './filters/phone-validation.filter';
 
 @Controller('contacts')
+@UseFilters(PhoneValidationFilter)
 export class ContactsController {
   private readonly logger = new Logger(ContactsController.name);
 
@@ -61,6 +67,7 @@ export class ContactsController {
 
   @Post()
   @UseGuards(AuthGuard)
+  @UsePipes(PhoneValidationPipe)
   async createContact(@Body() createContactDto: CreateContactDto) {
     return this.contactsService.createContact(createContactDto);
   }
@@ -73,6 +80,7 @@ export class ContactsController {
 
   @Put(':contactId')
   @UseGuards(AuthGuard)
+  @UsePipes(UpdatePhoneValidationPipe)
   async updateContact(
     @Param('contactId', ParseIntPipe) contactId: number,
     @Body() updateContactDto: UpdateContactDto,

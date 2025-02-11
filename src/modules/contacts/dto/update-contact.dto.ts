@@ -1,5 +1,6 @@
-import { IsOptional, IsString, IsNumber, IsDate, IsArray } from 'class-validator';
+import { IsOptional, IsString, IsNumber, IsDate, IsArray, Matches, IsNotEmpty } from 'class-validator';
 import { Type } from 'class-transformer';
+import { PHONE_ERROR_MESSAGES } from '../constants/error-messages';
 
 class PhoneDto {
   @IsOptional()
@@ -7,6 +8,10 @@ class PhoneDto {
   phoneId?: number;
 
   @IsString()
+  @IsNotEmpty()
+  @Matches(/^7[0-9]{10}$/, {
+    message: PHONE_ERROR_MESSAGES.INVALID_FORMAT,
+  })
   phoneNumber: string;
 }
 

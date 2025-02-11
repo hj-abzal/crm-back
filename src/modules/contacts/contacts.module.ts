@@ -14,6 +14,8 @@ import { GatewaysModule } from 'src/gateway/gateways.module';
 import { ContactReassignments } from './models/contact-reassignments.model';
 import { TasksModule } from '../tasks/tasks.module';
 import { CommentsModule } from '../comments/comments.module';
+import { PhoneValidationPipe } from './pipes/phone-validation.pipe';
+import { UpdatePhoneValidationPipe } from './pipes/update-phone-validation.pipe';
 
 @Module({
   controllers: [ContactsController],
@@ -34,6 +36,10 @@ import { CommentsModule } from '../comments/comments.module';
     GatewaysModule,
   ],
   exports: [SequelizeModule],
-  providers: [ContactsService],
+  providers: [
+    ContactsService,
+    PhoneValidationPipe,
+    UpdatePhoneValidationPipe,
+  ],
 })
 export class ContactsModule {}
