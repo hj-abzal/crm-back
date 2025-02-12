@@ -34,6 +34,5 @@ export class TaskDto {
   contactId?: number;
 
   @IsNumber()
-  @IsOptional()
-  managerId?: number;
+  managerId: number;
 }

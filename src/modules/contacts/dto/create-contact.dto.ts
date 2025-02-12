@@ -40,6 +40,13 @@ class CreateTaskDto {
 
   @IsEnum(TASK_STATUS)
   status: TASK_STATUS;
+
+  @IsOptional()
+  @IsString()
+  result?: string;
+
+  @IsNumber()
+  managerId: number;
 }
 
 class CreateCommentDto {

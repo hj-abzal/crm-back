@@ -68,8 +68,8 @@ export class ContactsController {
   @Post()
   @UseGuards(AuthGuard)
   @UsePipes(PhoneValidationPipe)
-  async createContact(@Body() createContactDto: CreateContactDto) {
-    return this.contactsService.createContact(createContactDto);
+  async createContact(@Body() createContactDto: CreateContactDto, @Req() req: ExpressGuarded) {
+    return this.contactsService.createContact(createContactDto, req.user.userId);
   }
 
   @Get(':contactId')

@@ -58,4 +58,11 @@ export class Tasks extends Model<Tasks> {
 
   @BelongsTo(() => Users)
   manager: Users;
+
+  @ForeignKey(() => Users)
+  @Column({ type: DataType.INTEGER, allowNull: false, field: 'created_by_manager_id' })
+  createdByManagerId: number;
+
+  @BelongsTo(() => Users, 'createdByManagerId')
+  createdByManager: Users;
 }

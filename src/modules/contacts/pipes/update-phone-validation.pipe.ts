@@ -33,6 +33,8 @@ export class UpdatePhoneValidationPipe implements PipeTransform<UpdateContactDto
         },
       });
 
+      console.log(existingPhone?.contactId);
+
       if (existingPhone) {
         throw new BadRequestException(PHONE_ERROR_MESSAGES.ALREADY_EXISTS_OTHER(phone));
       }

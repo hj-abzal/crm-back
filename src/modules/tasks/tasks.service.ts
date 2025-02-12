@@ -25,10 +25,10 @@ export class TasksService {
     this.logger.log('Creating new task');
     try {
       const manager = await this.usersRepository.findOne({
-        where: { userId: managerId },
+        where: { userId: createTaskDto.managerId },
       });
       if (!manager) {
-        throw new NotFoundException(`Manager with ID ${managerId} does not exist`);
+        throw new NotFoundException(`Manager with ID ${createTaskDto.managerId} does not exist`);
       }
 
       const { dueDate, ...rest } = createTaskDto;
@@ -37,16 +37,15 @@ export class TasksService {
       const task = await this.tasksRepository.create({
         ...rest,
         dueDate: parsedDueDate || null,
-        managerId,
+        managerId: createTaskDto.managerId,
+        createdByManagerId: managerId,
       });
 
       const createdTask = await this.findOne(task.taskId);
 
-      if (createdTask.managerId) {
         this.appGateway.server
           .to(`manager_${createdTask.managerId}`)
           .emit('task_created', { payload: createdTask });
-      }
 
       this.appGateway.server
         .to('admin')
@@ -144,9 +143,9 @@ export class TasksService {
   async update(
     taskId: number,
     updateTaskDto: TaskDto,
-    managerId: number,
+    updatingManagerId: number,
   ): Promise<Tasks> {
-    this.logger.log(`Updating task with ID: ${taskId}`);
+    this.logger.log(`Updating task with ID: ${taskId}, updating manager ID: ${updatingManagerId}`);
     try {
       const task = await this.tasksRepository.findByPk(taskId, {
         include: [{ model: Users, as: 'manager' }],
@@ -163,10 +162,16 @@ export class TasksService {
         updateTaskDto.managerId !== undefined &&
         updateTaskDto.managerId !== task.managerId
       ) {
+
+        const newManager = await this.usersRepository.findByPk(updateTaskDto.managerId);
+        if (!newManager) {
+          throw new NotFoundException(`Manager with ID ${updateTaskDto.managerId} not found`);
+        }
+
         await this.taskReassignmentsRepository.create({
           taskId,
           oldManagerId: task.managerId,
-          newManagerId: updateTaskDto.managerId,
+          newManagerId: newManager.userId,
         });
         oldManagerId = task.managerId;
       }
@@ -179,7 +184,7 @@ export class TasksService {
       }
       Object.assign(task, rest);
 
-      task.managerId = managerId;
+      task.managerId = updateTaskDto.managerId;
       await task.save();
 
       const updatedTask = await this.findOne(taskId);

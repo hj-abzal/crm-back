@@ -164,7 +164,7 @@ export class ContactsService {
     return contact;
   }
 
-  async createContact(createContactDto: CreateContactDto): Promise<Contacts> {
+  async createContact(createContactDto: CreateContactDto, createdByManagerId: number): Promise<Contacts> {
     this.logger.log('Creating new contact');
     try {
       const {
@@ -256,14 +256,18 @@ export class ContactsService {
 
          // Create task if provided
       if (createContactDto.task) {
-        const { dueDate, ...taskData } = createContactDto.task;
+        const taskData = createContactDto.task;
         await this.tasksService.create(
           {
-            ...taskData,
-            dueDate: dueDate?.toISOString(),
+            title: taskData.title,
+            description: taskData.description,
+            result: taskData.result,
+            dueDate: taskData.dueDate?.toISOString(),
+            status: taskData.status,
             contactId: contact.contactId,
+            managerId: taskData.managerId,
           },
-          createContactDto.managerId,
+          createdByManagerId,
         );
       }
 
@@ -272,7 +276,7 @@ export class ContactsService {
         await this.commentsService.create({
           ...createContactDto.comment,
           contactId: contact.contactId,
-          managerId: createContactDto.managerId,
+          managerId: createdByManagerId,
         });
       }
 
