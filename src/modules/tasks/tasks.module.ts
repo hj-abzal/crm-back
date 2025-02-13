@@ -8,16 +8,19 @@ import { Users } from '../users/users.model';
 import { AuthModule } from '../auth/auth.module';
 import { UsersModule } from '../users/users.module';
 import { GatewaysModule } from 'src/gateway/gateways.module';
+import { TaskType } from './task-type.model';
+import { TaskTypeService } from './task-type.service';
+import { TaskTypeController } from './task-type.controller';
 
 @Module({
   imports: [
-    SequelizeModule.forFeature([Tasks, TaskReassignments, Users]),
+    SequelizeModule.forFeature([Tasks, TaskReassignments, Users, TaskType]),
     GatewaysModule,
     AuthModule,
     forwardRef(() => UsersModule),
   ],
-  controllers: [TasksController],
-  providers: [TasksService],
-  exports: [TasksService],
+  controllers: [TasksController, TaskTypeController],
+  providers: [TasksService, TaskTypeService],
+  exports: [TasksService, TaskTypeService],
 })
 export class TasksModule {}
