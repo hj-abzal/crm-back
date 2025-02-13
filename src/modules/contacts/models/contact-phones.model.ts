@@ -1,10 +1,4 @@
 import {
-  AfterBulkCreate,
-  AfterBulkDestroy,
-  AfterBulkUpdate,
-  AfterCreate,
-  AfterDestroy,
-  AfterUpdate,
   BelongsTo,
   Column,
   DataType,
@@ -14,7 +8,11 @@ import {
 } from 'sequelize-typescript';
 import { Contacts } from './contacts.model';
 
-@Table({ tableName: 'contact_phones' })
+@Table({ 
+  tableName: 'contact_phones',
+  paranoid: true,
+  timestamps: true
+})
 export class ContactPhones extends Model<ContactPhones> {
   @Column({
     type: DataType.INTEGER,

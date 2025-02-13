@@ -24,6 +24,11 @@ export class CreateUserDto {
   @MinLength(6, { message: 'Password must be at least 6 characters long' })
   @MaxLength(50, { message: 'Password must not exceed 50 characters' })
   readonly password: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(10, { message: 'SIP ID must not exceed 10 characters' })
+  readonly sipId?: string;
 }
 
 export class UpdateUserDto {
@@ -50,4 +55,9 @@ export class UpdateUserDto {
   @MinLength(6, { message: 'Password must be at least 6 characters long' })
   @MaxLength(50, { message: 'Password must not exceed 50 characters' })
   password?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(10, { message: 'SIP ID must not exceed 10 characters' })
+  readonly sipId?: string;
 }

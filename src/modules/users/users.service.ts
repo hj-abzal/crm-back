@@ -31,6 +31,30 @@ export class UsersService {
     }
   }
 
+  private async validateSipId(sipId: string, excludeUserId?: number): Promise<void> {
+    if (!sipId) return;
+
+    const whereClause: any = {
+      sipId,
+      deletedAt: null,
+    };
+
+    if (excludeUserId) {
+      whereClause.userId = { [Op.ne]: excludeUserId };
+    }
+
+    const existingUser = await this.usersRepository.findOne({
+      where: whereClause,
+    });
+
+    if (existingUser) {
+      throw new HttpException(
+        `SIP ID ${sipId} is already in use by another active user.`,
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
   async create(userDto: CreateUserDto): Promise<Users> {
     this.logger.log(`Creating user with username: ${userDto.username}`);
 
@@ -45,6 +69,10 @@ export class UsersService {
       );
     }
 
+    if (userDto.sipId) {
+      await this.validateSipId(userDto.sipId);
+    }
+
     try {
       const user = {
         username: userDto.username,
@@ -52,6 +80,7 @@ export class UsersService {
         lastName: userDto.lastName,
         password: await CodeUtil.encryptPassword(userDto.password),
         role: userDto.role ? userDto.role : USER_ROLE.MANAGER,
+        sipId: userDto.sipId,
       };
 
       const createdUser = await this.usersRepository.create(user);
@@ -128,11 +157,16 @@ export class UsersService {
     try {
       this.logger.log(`Updating user with userId: ${userId}`);
 
+      if (userDto.sipId) {
+        await this.validateSipId(userDto.sipId, +userId);
+      }
+
       const user: UpdateUserDto = {
         username: userDto.username,
         firstName: userDto.firstName,
         lastName: userDto.lastName,
         role: userDto.role,
+        sipId: userDto.sipId,
       };
 
       if (userDto.password) {
@@ -160,7 +194,7 @@ export class UsersService {
       return updatedUser;
     } catch (error) {
       this.logger.error(`Error updating userId: ${userId}`, error);
-      throw new Error('Failed to update user');
+      throw error;
     }
   }
 
@@ -198,6 +232,11 @@ export class UsersService {
         HttpStatus.BAD_REQUEST,
       );
     }
+
+    if (userDto.sipId) {
+      await this.validateSipId(userDto.sipId);
+    }
+
     try {
       const user = {
         username: userDto.username,
@@ -205,6 +244,7 @@ export class UsersService {
         lastName: userDto.lastName,
         password: await CodeUtil.encryptPassword(userDto.password),
         role: USER_ROLE.ADMIN,
+        sipId: userDto.sipId,
       };
 
       return this.usersRepository.create(user);

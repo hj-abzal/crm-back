@@ -39,6 +39,14 @@ export class Users extends Model<Users> {
   })
   role: USER_ROLE;
 
+  @Column({
+    type: DataType.STRING,
+    field: 'sip_id',
+    allowNull: true,
+    unique: true,
+  })
+  sipId: string;
+
   @HasMany(() => Contacts, { foreignKey: 'managerId' })
   contacts: Contacts[];
 

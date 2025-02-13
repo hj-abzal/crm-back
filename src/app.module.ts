@@ -26,6 +26,8 @@ import { Tasks } from './modules/tasks/tasks.model';
 import { ContactStatuses } from './modules/contact-status/contact-status.model';
 import { ContactReassignments } from './modules/contacts/models/contact-reassignments.model';
 import { TaskReassignments } from './modules/tasks/task-reassignments.model';
+import { SipuniModule } from './modules/sipuni/sipuni.module';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -74,6 +76,7 @@ import { TaskReassignments } from './modules/tasks/task-reassignments.model';
     TasksModule,
     ContactStatusModule,
     GatewaysModule,
+    SipuniModule,
   ],
 })
 export class AppModule implements NestModule {
