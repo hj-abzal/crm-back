@@ -18,11 +18,12 @@
     "@nestjs/common": "^11.0.5",
     "@nestjs/config": "^4.0.0",
     "@nestjs/core": "^11.0.5",
+    "@nestjs/event-emitter": "^3.0.0",
     "@nestjs/jwt": "^11.0.0",
     "@nestjs/platform-express": "^11.0.5",
     "@nestjs/platform-socket.io": "^11.0.5",
     "@nestjs/sequelize": "^11.0.0",
-    "@nestjs/websockets": "^11.0.5",
+    "@nestjs/websockets": "^11.0.9",
     "axios": "^1.7.9",
     "bcrypt": "^5.1.1",
     "class-transformer": "^0.5.1",
@@ -33,7 +34,9 @@
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.2.0",
     "sequelize": "^6.37.5",
-    "sequelize-typescript": "^2.1.6"
+    "sequelize-typescript": "^2.1.6",
+    "socket.io": "^4.8.1",
+    "whatsapp-web.js": "^1.26.0"
   },
   "devDependencies": {
     "@faker-js/faker": "^9.4.0",

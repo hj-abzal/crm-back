@@ -10,6 +10,7 @@ import {
 import { Server, Socket } from 'socket.io';
 import { AuthenticatedSocket } from './authenticated-socket-io.adapter';
 import { USER_ROLE } from 'src/modules/users/user-role.enums';
+import { OnEvent } from '@nestjs/event-emitter';
 
 @WebSocketGateway({ cors: true })
 export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -42,5 +43,21 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     // Emit response directly to the same client
     client.emit('response', `Server received: ${message}`);
+  }
+
+  // WhatsApp Events
+  @OnEvent('whatsapp.qr')
+  handleWhatsAppQR(qr: string) {
+    this.server.emit('whatsapp:qr', qr);
+  }
+
+  @OnEvent('whatsapp.ready')
+  handleWhatsAppReady() {
+    this.server.emit('whatsapp:ready');
+  }
+
+  @OnEvent('whatsapp.disconnected')
+  handleWhatsAppDisconnected() {
+    this.server.emit('whatsapp:disconnected');
   }
 }
