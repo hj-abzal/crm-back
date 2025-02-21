@@ -26,7 +26,6 @@ export class TaskTypeController {
 
   @Get()
   @UseGuards(AuthGuard)
-  @Roles(USER_ROLE.ADMIN)
   findAll() {
     return this.taskTypeService.findAll();
   }
