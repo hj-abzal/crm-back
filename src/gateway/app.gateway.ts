@@ -47,17 +47,18 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   // WhatsApp Events
   @OnEvent('whatsapp.qr')
-  handleWhatsAppQR(qr: string) {
-    this.server.emit('whatsapp:qr', qr);
+  handleWhatsAppQR(qr: string, userId: string) {
+    // Emit to specific user's room
+    this.server.to(`user_${userId}`).emit('whatsapp:qr', qr);
   }
 
-  @OnEvent('whatsapp.ready')
-  handleWhatsAppReady() {
-    this.server.emit('whatsapp:ready');
+  handleWhatsAppReady(userId: string) {
+    // Emit to specific user's room
+    this.server.to(`user_${userId}`).emit('whatsapp:ready');
   }
 
-  @OnEvent('whatsapp.disconnected')
-  handleWhatsAppDisconnected() {
-    this.server.emit('whatsapp:disconnected');
+  handleWhatsAppDisconnected(userId: string) {
+    // Emit to specific user's room
+    this.server.to(`user_${userId}`).emit('whatsapp:disconnected');
   }
 }
