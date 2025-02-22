@@ -27,6 +27,7 @@ import { ContactStatuses } from './modules/contact-status/contact-status.model';
 import { ContactReassignments } from './modules/contacts/models/contact-reassignments.model';
 import { TaskReassignments } from './modules/tasks/task-reassignments.model';
 import { SipuniModule } from './modules/sipuni/sipuni.module';
+import { InvestorsInfoModule } from './modules/investors-info/investors-info.module';
 
 @Module({
   imports: [
@@ -77,6 +78,7 @@ import { SipuniModule } from './modules/sipuni/sipuni.module';
     ContactStatusModule,
     GatewaysModule,
     SipuniModule,
+    InvestorsInfoModule,
   ],
 })
 export class AppModule implements NestModule {
