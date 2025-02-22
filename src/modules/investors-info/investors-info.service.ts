@@ -40,11 +40,11 @@ export class InvestorsInfoService {
     });
 
     return {
-        dailySales: contacts.map((contact: any) => ({
+        dailySales: contacts?.map((contact: any) => ({
             date: contact.date,
             quantity: parseInt(contact.quantity),
             total: parseInt(contact.quantity) * 1000,
-        }))
+        }))?.sort((a: DailySale, b: DailySale) => new Date(a.date).getTime() - new Date(b.date).getTime()),
     }
   }
 } 
